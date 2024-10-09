@@ -1,0 +1,54 @@
+package com.example.apptemplates.presentation.login.login_menu
+
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.apptemplates.data.ActiveUser
+import com.example.apptemplates.data.User
+import com.example.apptemplates.firebase.auth.AuthResponseCollector
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+class AuthViewModel : ViewModel() {
+
+    // StateFlow to observe if the user is authenticated
+    private val _isUserAuthenticated = MutableStateFlow(false)
+    val isUserAuthenticated: StateFlow<Boolean> = _isUserAuthenticated.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            checkIfUserAuthenticated()
+        }
+    }
+
+    // This function checks if the Firebase user is authenticated
+    private suspend fun checkIfUserAuthenticated() {
+        val firebaseUser = AuthResponseCollector.currentUser
+
+        if (firebaseUser != null) {
+            setUserAuthenticated(firebaseUser)
+        } else {
+            Log.i("AUTH", "NIE MA USER")
+            _isUserAuthenticated.value = false
+        }
+
+    }
+
+    // Sets the authenticated user and updates the state
+    private fun setUserAuthenticated(firebaseUser: FirebaseUser) {
+        Log.i("AUTH", "JEEST USER")
+        ActiveUser.setUser(User(firebaseUser.uid, firebaseUser.email ?: ""))
+        _isUserAuthenticated.value = true
+    }
+
+    // Logout function to clear user authentication
+    fun logout() {
+        FirebaseAuth.getInstance().signOut()
+        ActiveUser.clearUser()
+        _isUserAuthenticated.value = false
+    }
+}

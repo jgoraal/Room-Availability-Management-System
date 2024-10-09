@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "674612882264",
+    "project_id": "apptemplates-6881f",
+    "storage_bucket": "apptemplates-6881f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:674612882264:android:db0176c92eb0121eb0d32d",
+        "android_client_info": {
+          "package_name": "com.example.apptemplates"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5-W6DpqSxze0Q64LfAGoPv-ImbkAWnUc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
