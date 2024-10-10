@@ -8,7 +8,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.example.apptemplates.presentation.login.login_menu.AuthViewModel
-import com.example.apptemplates.presentation.login.login_menu.LoginMenuScreen
 import com.example.apptemplates.presentation.login.sign_in.SignInScreen
 import com.example.apptemplates.presentation.login.sign_in.SignInViewModel
 import com.example.apptemplates.presentation.login.sign_up.SignUpScreen
@@ -16,6 +15,8 @@ import com.example.apptemplates.presentation.login.sign_up.SignUpViewModel
 import com.example.apptemplates.presentation.login.sign_up_confirm.SignUpConfirmScreen
 import com.example.apptemplates.presentation.login.sign_up_confirm.SignUpConfirmViewModel
 import com.example.apptemplates.presentation.login.temp.SignUpConfirmEmailScreen
+import com.example.apptemplates.presentation.login.test.TestScreen
+import com.example.apptemplates.presentation.login.test.TestViewModel
 
 
 fun NavGraphBuilder.authNavGraph(
@@ -43,7 +44,15 @@ fun NavGraphBuilder.authNavGraph(
                 }
             } else {
                 // If not authenticated, display the login screen
-                LoginMenuScreen(
+
+                val testViewModel: TestViewModel = viewModel()
+
+                TestScreen(
+                    viewModel = testViewModel
+                )
+
+
+                /*LoginMenuScreen(
                     viewModel = authViewModel,
                     navigateToSignIn = {
                         navController.navigate(AppScreen.Auth.SignIn.route)
@@ -51,7 +60,7 @@ fun NavGraphBuilder.authNavGraph(
                     navigateToSignUp = {
                         navController.navigate(AppScreen.Auth.SignUp.route)
                     }
-                )
+                )*/
             }
         }
 
