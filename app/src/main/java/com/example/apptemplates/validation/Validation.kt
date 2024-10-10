@@ -2,6 +2,7 @@ package com.example.apptemplates.validation
 
 import com.example.apptemplates.form.FormKey
 import com.example.apptemplates.form.FormState
+import com.example.apptemplates.presentation.login.sign_in.validation.UIState
 import com.example.apptemplates.result.Result
 
 class Validation() {
@@ -67,7 +68,7 @@ class Validation() {
             }
         }
 
-        return state.copy(errors = errors)
+        return state.copy(errors = errors, uiState = if (errors.isEmpty()) UIState.Loading else UIState.Idle)
     }
 
     private suspend fun getAuthenticationResult(

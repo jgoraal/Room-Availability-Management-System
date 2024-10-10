@@ -1,5 +1,6 @@
 package com.example.apptemplates.firebase.database
 
+import android.util.Log
 import com.example.apptemplates.data.User
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -67,9 +68,10 @@ object Database : FirestoreDatabase {
             if (!querySnapshot.isEmpty) {
                 FirestoreResult.SuccessWithResult(true)
             } else {
-                FirestoreResult.Failure(Exception("User with $username not found"))
+                FirestoreResult.SuccessWithResult(false)
             }
         } catch (e: Exception) {
+            Log.i("Database Exception", e.toString())
             FirestoreResult.Failure(e)
         }
     }

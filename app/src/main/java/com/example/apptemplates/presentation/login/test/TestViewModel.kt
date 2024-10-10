@@ -17,7 +17,7 @@ class TestViewModel : BaseLoginViewModel() {
             .addValidator(FormKey.DATABASE_EMAIL)
             .addValidator(FormKey.DATABASE_USERNAME)
 
-        authManager.addOperation(AuthOperationType.SIGN_IN)
+        authManager.addOperation(AuthOperationType.SIGN_UP)
     }
 
 

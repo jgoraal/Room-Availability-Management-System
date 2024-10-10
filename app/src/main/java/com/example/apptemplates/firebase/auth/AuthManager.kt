@@ -1,6 +1,7 @@
 package com.example.apptemplates.firebase.auth
 
 import com.example.apptemplates.form.FormState
+import com.example.apptemplates.presentation.login.sign_in.validation.UIState
 import com.example.apptemplates.result.Result
 
 class AuthManager {
@@ -27,7 +28,7 @@ class AuthManager {
     // Perform the added operation
     suspend fun performAuthAction(state: FormState): Result<*> {
         val currentOperation = operation ?: return Result.Error("No operation added to AuthManager")
-        return currentOperation.performAuthAction(state)
+        return if (state.uiState == UIState.Loading) currentOperation.performAuthAction(state) else Result.Error("UI state is not loading")
     }
 
     // Clear the current operation (optional)

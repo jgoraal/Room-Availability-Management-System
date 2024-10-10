@@ -12,8 +12,16 @@ data class User(
     val lastSeen: Long = 0L,
     val created: String = UserCreatedDate.getInstance().getFormattedCreatedDate(),
     val isVerified: Boolean = false,
+    val role: Role = Role.GUEST
 )
 
+
+enum class Role {
+    ADMIN,
+    STUDENT,
+    EMPLOYEE,
+    GUEST
+}
 
 class UserCreatedDate {
 

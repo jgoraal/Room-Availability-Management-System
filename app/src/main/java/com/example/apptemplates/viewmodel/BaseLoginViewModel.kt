@@ -8,6 +8,7 @@ import com.example.apptemplates.firebase.auth.AuthResponseCollector
 import com.example.apptemplates.firebase.database.Database
 import com.example.apptemplates.firebase.database.FirestoreDatabase
 import com.example.apptemplates.form.FormState
+import com.example.apptemplates.presentation.login.sign_in.validation.UIState
 import com.example.apptemplates.result.Result
 import com.example.apptemplates.validation.Validation
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,12 +38,12 @@ abstract class BaseLoginViewModel(
             _state.value =
                 validation.validateAuthentication(_state.value)
 
-
             when (val result = authManager.performAuthAction(_state.value)) {
                 is Result.Success -> onSuccess()
                 is Result.Error -> onError(result.error)
                 is Result.SuccessWithResult<*> -> onSuccessWithData(result.data)
             }
+
         }
     }
 
