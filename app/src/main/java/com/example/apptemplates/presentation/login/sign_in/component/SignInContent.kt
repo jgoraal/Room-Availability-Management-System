@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import com.example.apptemplates.form.FormKey
 import com.example.apptemplates.presentation.login.sign_in.SignInViewModel
 import com.example.apptemplates.presentation.login.sign_in.component.CommonEmailTextField
 import com.example.apptemplates.presentation.login.sign_in.component.CommonPasswordTextField
@@ -34,7 +35,6 @@ import com.example.apptemplates.presentation.login.sign_in.component.Header
 import com.example.apptemplates.presentation.login.sign_in.component.PasswordResetText
 import com.example.apptemplates.presentation.login.sign_in.component.getThemeColors
 import com.example.apptemplates.presentation.login.sign_in.validation.UIState
-import com.example.apptemplates.presentation.login.sign_in.validation.ValidationKey
 
 @Composable
 fun SignIn(
@@ -46,15 +46,15 @@ fun SignIn(
 
     val focusManager = LocalFocusManager.current
     val theme = getThemeColors()
-    val state by viewModel.signInState.collectAsState()
+    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
     // Show Toast when max attempts are exceeded
-    if (state.errors[ValidationKey.ATTEMPTS.name] != null && state.errors[ValidationKey.ATTEMPTS.name]!!.isNotEmpty()) {
-        LaunchedEffect(state.errors[ValidationKey.ATTEMPTS.name]) {
+    if (state.errors.isNotEmpty()) {
+        LaunchedEffect(Unit) {
             Toast.makeText(
                 context,
-                state.errors[ValidationKey.ATTEMPTS.name],
+                state.errors.values.toString(),
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -112,8 +112,8 @@ fun SignIn(
                 CommonEmailTextField(
                     value = state.email,
                     onValueChange = { viewModel.onStateChange(state.copy(email = it)) },
-                    isError = state.errors[ValidationKey.EMAIL.name] != null,
-                    errorText = state.errors[ValidationKey.EMAIL.name],
+                    isError = (state.errors[FormKey.EMAIL] != null || state.errors[FormKey.DATABASE_EMAIL] != null),
+                    errorText = state.errors[FormKey.EMAIL] ?: state.errors[FormKey.DATABASE_EMAIL],
                     theme = theme
                 )
 
@@ -121,8 +121,8 @@ fun SignIn(
                 CommonPasswordTextField(
                     value = state.password,
                     onValueChange = { viewModel.onStateChange(state.copy(password = it)) },
-                    isError = state.errors[ValidationKey.PASSWORD.name] != null,
-                    errorText = state.errors[ValidationKey.PASSWORD.name],
+                    isError = state.errors[FormKey.PASSWORD] != null,
+                    errorText = state.errors[FormKey.PASSWORD],
                     theme = theme
                 )
 
@@ -132,7 +132,7 @@ fun SignIn(
                 CommonValidateButton(
                     onClick = {
                         focusManager.clearFocus()
-                        viewModel.signIn(navigateToHome, navigateBack)
+                        viewModel.authenticate()
                     },
                     theme = theme
                 )

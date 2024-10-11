@@ -1,5 +1,6 @@
 package com.example.apptemplates.presentation.login.test
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,23 +15,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.apptemplates.form.FormKey
+import com.example.apptemplates.presentation.login.sign_in.validation.UIState
 
 
 @Composable
 fun TestScreen(
     viewModel: TestViewModel,
 ) {
-
-    // Obserwowanie stanu formularza z ViewModelu
     val formState by viewModel.state.collectAsState()
+
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .background(Color.Black)
     ) {
 
         // Pole dla adresu email
@@ -54,7 +57,6 @@ fun TestScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
         // Pole dla adresu email
         TextField(
             value = formState.email,
@@ -65,9 +67,10 @@ fun TestScreen(
             isError = formState.errors[FormKey.EMAIL] != null,
             modifier = Modifier.fillMaxWidth()
         )
-        if (formState.errors[FormKey.EMAIL] != null) {
+        if (formState.errors[FormKey.EMAIL] != null || formState.errors[FormKey.DATABASE_EMAIL] != null) {
             Text(
-                text = formState.errors[FormKey.EMAIL] ?: "",
+                text = formState.errors[FormKey.EMAIL]
+                    ?: formState.errors[FormKey.DATABASE_EMAIL] ?: "",
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.labelMedium
             )
@@ -117,8 +120,18 @@ fun TestScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Text("Liczba prób logowania: ${formState.attempts}")
-        Text("UI State: ${formState.errors[FormKey.ATTEMPTS] ?: ""}")
+        Text("Liczba prób logowania: ${formState.attempts}", color = Color.White)
+
+        if (formState.uiState is UIState.Timeout) {
+            Text(
+                text = (formState.uiState as UIState.Timeout).message,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelLarge
+            )
+
+            val remainingTime = formState.timeoutRemaining.toString()
+            Text("Zablokowany na $remainingTime sekund", color = MaterialTheme.colorScheme.error)
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -127,10 +140,23 @@ fun TestScreen(
             onClick = {
                 viewModel.authenticate()
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = true // Dezaktywacja przycisku w przypadku timeoutu
         ) {
             Text("Zatwierdź")
         }
-    }
 
+        // Informacja o statusie
+        when (formState.uiState) {
+            is UIState.Loading -> {
+                Text("Ładowanie...")
+            }
+
+            is UIState.Idle -> {
+                Text("Gotowe do logowania")
+            }
+
+            else -> {}
+        }
+    }
 }

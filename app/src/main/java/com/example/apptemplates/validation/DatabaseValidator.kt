@@ -53,9 +53,7 @@ class DatabaseValidator : Validator {
                 }
             }
 
-            is FirestoreResult.Failure -> {
-                Result.Error("Błąd podczas sprawdzania czy nazwa użytkownika jest zarejestrowana")
-            }
+            is FirestoreResult.Failure -> Result.Error("Błąd podczas sprawdzania czy nazwa użytkownika jest zarejestrowana")
 
             else -> Result.Error("Błąd podczas sprawdzania czy nazwa użytkownika jest zarejestrowana")
         }
@@ -63,20 +61,26 @@ class DatabaseValidator : Validator {
 
 
     suspend fun validateEmailInDatabase(email: String): Result<String> {
-        return when (Database.getUserByEmail(email)) {
+        return when (val result = Database.getUserByEmail(email)) {
 
             is FirestoreResult.SuccessWithResult<*> -> {
-                Result.Success
+                Result.Error("Email jest już zarejestrowany")
             }
 
             is FirestoreResult.Failure -> {
-                Result.Error("Błąd podczas sprawdzania czy email jest zarejestrowany")
-            }
+
+                result.exception.message?.let {
+                    if (it.contains("not found")) {
+                        Result.Success
+                    } else {
+                        Result.Error("Błąd podczas sprawdzania czy email jest zarejestrowany")
+                    }
+                } ?: Result.Error("Błąd podczas sprawdzania czy email jest zarejestrowany")
 
 
-            else -> {
-                Result.Error("Błąd podczas sprawdzania czy email jest zarejestrowany:")
             }
+
+            else -> Result.Error("Błąd podczas sprawdzania czy email jest zarejestrowany")
 
         }
     }

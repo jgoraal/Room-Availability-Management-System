@@ -22,7 +22,7 @@ class TestViewModel : BaseLoginViewModel() {
 
 
     override fun onSuccess() {
-        _state.value = _state.value.copy(attempts = 0)
+
     }
 
     override fun <T> onSuccessWithData(result: T) {
@@ -30,7 +30,7 @@ class TestViewModel : BaseLoginViewModel() {
     }
 
     override fun onError(error: String) {
-        _state.value = _state.value.copy(attempts = _state.value.attempts + 1)
+
     }
 
 }

@@ -1,5 +1,6 @@
 package com.example.apptemplates.validation
 
+import android.util.Log
 import com.example.apptemplates.form.FormKey
 import com.example.apptemplates.form.FormState
 import com.example.apptemplates.presentation.login.sign_in.validation.UIState
@@ -8,6 +9,10 @@ import com.example.apptemplates.result.Result
 class Validation() {
 
     private val validators = mutableMapOf<FormKey, Validator>()
+
+    fun getValidators(): Map<FormKey, Validator> {
+        return validators
+    }
 
 
     fun addValidator(key: FormKey): Validation {
@@ -61,6 +66,16 @@ class Validation() {
     suspend fun validateAuthentication(state: FormState): FormState {
         val errors = mutableMapOf<FormKey, String?>()
 
+
+        validators[FormKey.ATTEMPTS]?.let { validator ->
+            if (validator is AttemptsValidator && validator.isTimedOut(state.timeoutStart)) {
+                return state.copy(
+                    errors = errors,
+                )
+            }
+        }
+
+
         validators.forEach { (key, validator) ->
             val result = getAuthenticationResult(state, key, validator)
             if (result is Result.Error) {
@@ -68,7 +83,23 @@ class Validation() {
             }
         }
 
-        return state.copy(errors = errors, uiState = if (errors.isEmpty()) UIState.Loading else UIState.Idle)
+
+        Log.i("ERRORS", errors.toString())
+
+
+        return state.copy(
+            errors = errors,
+            uiState = if (errors.isEmpty()) UIState.Loading else UIState.Idle
+        )
+
+        /*return if (errors.containsKey(FormKey.ATTEMPTS)) {
+            state.copy(errors = errors, timeoutStart = System.currentTimeMillis())
+        } else {
+            state.copy(
+                errors = errors,
+
+            )
+        }*/
     }
 
     private suspend fun getAuthenticationResult(

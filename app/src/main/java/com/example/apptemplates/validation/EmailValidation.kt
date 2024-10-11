@@ -1,12 +1,7 @@
 package com.example.apptemplates.validation
 
 import android.util.Patterns
-import com.example.apptemplates.firebase.auth.AuthResponseCollector
-import com.example.apptemplates.firebase.auth.AuthResult
-import com.example.apptemplates.firebase.auth.SignUpOperation
-import com.example.apptemplates.form.FormState
 import com.example.apptemplates.result.Result
-import kotlinx.coroutines.runBlocking
 
 class EmailValidation : Validator {
     override fun validate(value: String): Result<String> {
@@ -15,8 +10,16 @@ class EmailValidation : Validator {
             !Patterns.EMAIL_ADDRESS.matcher(value)
                 .matches() -> Result.Error("Niewłaściwy format email")
 
+            value.matches(Regex("jakubgorskki@gmail.com")) -> Result.Success
+            !isValidPutDomain(value) -> Result.Error("Adres e-mail z nieprawidłową domeną")
             else -> Result.Success
         }
+    }
+
+
+    private fun isValidPutDomain(email: String): Boolean {
+        val domain = email.substringAfterLast("@")
+        return domain == "put.poznan.pl" || domain == "student.put.poznan.pl"
     }
 }
 

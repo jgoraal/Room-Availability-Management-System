@@ -9,5 +9,7 @@ data class FormState(
     val confirmPassword: String = "@Test1234",
     val attempts: Int = 0,
     val errors: Map<FormKey, String?> = emptyMap(),
-    val uiState: UIState = UIState.Idle
+    val uiState: UIState = UIState.Idle,
+    val timeoutStart: Long = 0L,
+    val timeoutRemaining: Long = 0L,
 )

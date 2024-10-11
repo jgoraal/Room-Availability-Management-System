@@ -40,6 +40,7 @@ object Database : FirestoreDatabase {
         }
     }
 
+
     override suspend fun getUserByEmail(email: String): FirestoreResult {
         return try {
             // Znajdź dokument użytkownika za pomocą zapytania na podstawie pola "email"
@@ -47,14 +48,12 @@ object Database : FirestoreDatabase {
             if (!querySnapshot.isEmpty) {
                 val user = querySnapshot.documents.first().toObject(User::class.java)
 
-                if (user != null) {
-                    FirestoreResult.SuccessWithResult(user)
-                } else {
-                    FirestoreResult.Failure(Exception("Failed to parse user data"))
+                user.let {
+                    FirestoreResult.SuccessWithResult(it)
                 }
 
             } else {
-                FirestoreResult.Failure(Exception("User with $email not found"))
+                FirestoreResult.Failure(Exception("Email not found"))
             }
         } catch (e: Exception) {
             FirestoreResult.Failure(e)

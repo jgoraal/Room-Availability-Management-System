@@ -1,19 +1,14 @@
 package com.example.apptemplates.presentation.login.sign_in
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import android.util.Log
+import com.example.apptemplates.firebase.auth.AuthOperationType
 import com.example.apptemplates.firebase.auth.AuthResponse
 import com.example.apptemplates.firebase.auth.AuthResponseCollector
 import com.example.apptemplates.firebase.database.Database
 import com.example.apptemplates.firebase.database.FirestoreDatabase
-import com.example.apptemplates.presentation.login.sign_in.validation.SignInState
+import com.example.apptemplates.form.FormKey
 import com.example.apptemplates.presentation.login.sign_in.validation.SignInValidation
-import com.example.apptemplates.presentation.login.sign_in.validation.UIState
-import com.example.apptemplates.presentation.login.sign_in.validation.ValidationKey
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import com.example.apptemplates.viewmodel.BaseLoginViewModel
 
 
 sealed class SignInResult {
@@ -25,9 +20,34 @@ class SignInViewModel(
     private val signInValidation: SignInValidation = SignInValidation(),
     private val repository: AuthResponse = AuthResponseCollector,
     private val database: FirestoreDatabase = Database
-) : ViewModel() {
+) : BaseLoginViewModel() {
 
-    private val _signInState = MutableStateFlow(SignInState())
+
+    init {
+        validation
+            .addValidator(FormKey.EMAIL)
+            .addValidator(FormKey.PASSWORD)
+            .addValidator(FormKey.DATABASE_EMAIL_PASSWORD)
+            .addValidator(FormKey.ATTEMPTS)
+
+        authManager.addOperation(AuthOperationType.SIGN_IN)
+    }
+
+
+    override fun onSuccess() {
+        Log.i("TAG", "onSuccess: ")
+    }
+
+    override fun <T> onSuccessWithData(result: T) {
+        Log.i("TAG", "onSuccessWithData: $result")
+    }
+
+    override fun onError(error: String) {
+        Log.d("TAG", "onError: $error")
+    }
+
+
+    /*private val _signInState = MutableStateFlow(SignInState())
     val signInState: StateFlow<SignInState> = _signInState.asStateFlow()
 
     fun onStateChange(updatedState: SignInState) {
@@ -79,6 +99,7 @@ class SignInViewModel(
         if (_signInState.value.attempts >= SignInValidation.MAX_ATTEMPTS) {
             navigateBack()  // Navigate back or show an error message
         }
-    }
+    }*/
+
 
 }
