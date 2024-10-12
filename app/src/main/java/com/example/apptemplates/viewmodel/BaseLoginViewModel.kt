@@ -9,6 +9,7 @@ import com.example.apptemplates.firebase.database.Database
 import com.example.apptemplates.firebase.database.FirestoreDatabase
 import com.example.apptemplates.form.FormKey
 import com.example.apptemplates.form.FormState
+import com.example.apptemplates.navigation.NavigationEvent
 import com.example.apptemplates.presentation.login.sign_in.validation.SignInValidation.Companion.MAX_ATTEMPTS
 import com.example.apptemplates.presentation.login.sign_in.validation.UIState
 import com.example.apptemplates.result.Result
@@ -29,6 +30,11 @@ abstract class BaseLoginViewModel(
 
     private val _state = MutableStateFlow(FormState())
     val state: StateFlow<FormState> = _state.asStateFlow()
+
+
+    private val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
+    val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
+
 
     fun onStateChange(updatedState: FormState) {
         _state.value = validation.validateForm(updatedState)
@@ -129,6 +135,5 @@ abstract class BaseLoginViewModel(
             resetAttempts() // Resetowanie prób po zakończeniu timeoutu
         }
     }
-
 
 }

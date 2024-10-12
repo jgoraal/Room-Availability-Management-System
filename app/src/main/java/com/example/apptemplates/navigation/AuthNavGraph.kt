@@ -8,6 +8,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.example.apptemplates.presentation.login.login_menu.AuthViewModel
+import com.example.apptemplates.presentation.login.login_menu.LoginMenuScreen
 import com.example.apptemplates.presentation.login.sign_in.SignInScreen
 import com.example.apptemplates.presentation.login.sign_in.SignInViewModel
 import com.example.apptemplates.presentation.login.sign_up.SignUpScreen
