@@ -1,19 +1,19 @@
 package com.example.apptemplates.viewmodel
 
+import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.apptemplates.firebase.auth.AuthManager
-import com.example.apptemplates.firebase.auth.AuthResponse
-import com.example.apptemplates.firebase.auth.AuthResponseCollector
-import com.example.apptemplates.firebase.database.Database
-import com.example.apptemplates.firebase.database.FirestoreDatabase
+import com.example.apptemplates.firebase.auth.AuthService
+import com.example.apptemplates.firebase.auth.FirebaseAuthManager
+import com.example.apptemplates.firebase.auth.operation.AuthManager
+import com.example.apptemplates.firebase.database.FirestoreRepository
+import com.example.apptemplates.firebase.database.FirestoreService
 import com.example.apptemplates.form.FormKey
 import com.example.apptemplates.form.FormState
-import com.example.apptemplates.navigation.NavigationEvent
-import com.example.apptemplates.presentation.login.sign_in.validation.SignInValidation.Companion.MAX_ATTEMPTS
-import com.example.apptemplates.presentation.login.sign_in.validation.UIState
+import com.example.apptemplates.form.UIState
+import com.example.apptemplates.form.validation.Validation
+import com.example.apptemplates.navigation.event.NavigationEvent
 import com.example.apptemplates.result.Result
-import com.example.apptemplates.validation.Validation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,18 +22,32 @@ import kotlinx.coroutines.launch
 
 
 abstract class BaseLoginViewModel(
+    private val sharedPreferences: SharedPreferences? = null,
     protected val validation: Validation = Validation(),
     protected val authManager: AuthManager = AuthManager(),
-    private val repository: AuthResponse = AuthResponseCollector,
-    private val database: FirestoreDatabase = Database
+    private val repository: AuthService = FirebaseAuthManager,
+    private val database: FirestoreService = FirestoreRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(FormState())
+    companion object {
+        private const val TIMEOUT_START_KEY = "timeout_start_key"
+        private const val ATTEMPTS_KEY = "attempts_key"
+        private const val MAX_ATTEMPTS = 3
+        private const val TIMEOUT_DURATION_MS = 60000L // 60 seconds timeout
+    }
+
+
+    //  State for form and navigation events
+    protected val _state = MutableStateFlow(FormState())
     val state: StateFlow<FormState> = _state.asStateFlow()
 
-
-    private val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
+    protected val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
     val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
+
+
+    init {
+        loadTimeoutData()
+    }
 
 
     fun onStateChange(updatedState: FormState) {
@@ -67,9 +81,47 @@ abstract class BaseLoginViewModel(
     }
 
 
-    protected abstract fun onSuccess()
-    protected abstract fun <T> onSuccessWithData(result: T)
-    protected abstract fun onError(error: String)
+    // SharedPreferences methods for timeout data
+    private fun saveTimeoutData(timeoutStart: Long, attempts: Int) {
+
+
+        sharedPreferences?.edit()?.apply {
+            putLong(TIMEOUT_START_KEY, timeoutStart)
+            putInt(ATTEMPTS_KEY, attempts)
+            apply()
+        }
+
+
+    }
+
+    private fun loadTimeoutData() {
+
+        if (sharedPreferences != null) {
+
+            viewModelScope.launch {
+
+                val timeoutStart = sharedPreferences.getLong(TIMEOUT_START_KEY, 0L)
+                val attempts = sharedPreferences.getInt(ATTEMPTS_KEY, 0)
+
+                if (timeoutStart > 0 && attempts >= MAX_ATTEMPTS) {
+                    val remainingTime = getRemainingTimeInSeconds(timeoutStart)
+                    if (remainingTime > 0) {
+                        _state.value = _state.value.copy(
+                            attempts = attempts,
+                            uiState = UIState.Timeout("Zbyt wiele prób logowania, spróbuj ponownie za $remainingTime sekund"),
+                            timeoutStart = timeoutStart,
+                            timeoutRemaining = remainingTime
+                        )
+                        viewModelScope.launch { updateRemainingTime() }  // Kontynuowanie timeoutu po restarcie
+                    } else {
+                        resetAttempts()  // Jeśli timeout wygasł, resetujemy próby
+                    }
+                }
+
+            }
+
+        }
+    }
 
 
     private suspend fun increaseAttempts() {
@@ -88,6 +140,9 @@ abstract class BaseLoginViewModel(
     private suspend fun startTimeout() {
         val timeoutDuration = 60000L // ustawiamy na 60 sekund
 
+        val currentTime = System.currentTimeMillis()
+        saveTimeoutData(currentTime, MAX_ATTEMPTS)
+
         _state.value = _state.value.copy(
             attempts = MAX_ATTEMPTS,
             errors = emptyMap(),
@@ -99,6 +154,34 @@ abstract class BaseLoginViewModel(
         updateRemainingTime()
     }
 
+    private suspend fun updateRemainingTime() {
+
+        var remainingTime = getRemainingTimeInSeconds()
+
+        // Wyświetlamy od razu pełne 60 sekund (jeśli tyle zostało)
+        _state.value = _state.value.copy(timeoutRemaining = remainingTime)
+
+        while (_state.value.uiState is UIState.Timeout && remainingTime > 0) {
+            delay(1000L) // Czekamy 1 sekundę
+            remainingTime = getRemainingTimeInSeconds() // Przeliczamy czas po opóźnieniu
+            _state.value =
+                _state.value.copy(timeoutRemaining = remainingTime) // Aktualizujemy stan
+        }
+
+        resetAttempts() // Resetowanie prób po zakończeniu timeoutu
+
+    }
+
+
+    private fun getRemainingTimeInSeconds(timeoutStart: Long = _state.value.timeoutStart): Long {
+        val currentTime = System.currentTimeMillis()
+        val timePassed = currentTime - timeoutStart
+        val remainingTime = 60000L - timePassed
+        return if (remainingTime > 0) remainingTime / 1000 else 0
+    }
+
+
+    //  Reset functions
     private fun resetAttempts() {
 
         val attemptsValidatorExists = validation.getValidators()[FormKey.ATTEMPTS] != null
@@ -109,31 +192,28 @@ abstract class BaseLoginViewModel(
             uiState = UIState.Idle,
             timeoutStart = 0L
         )
-    }
 
-    private fun getRemainingTimeInSeconds(): Long {
-        val currentTime = System.currentTimeMillis()
-        val timePassed = currentTime - _state.value.timeoutStart
-        val remainingTime = 60000L - timePassed
-        return if (remainingTime > 0) remainingTime / 1000 else 0
-    }
 
-    private suspend fun updateRemainingTime() {
-        viewModelScope.launch {
-            var remainingTime = getRemainingTimeInSeconds()
-
-            // Wyświetlamy od razu pełne 60 sekund (jeśli tyle zostało)
-            _state.value = _state.value.copy(timeoutRemaining = remainingTime)
-
-            while (_state.value.uiState is UIState.Timeout && remainingTime > 0) {
-                delay(1000L) // Czekamy 1 sekundę
-                remainingTime = getRemainingTimeInSeconds() // Przeliczamy czas po opóźnieniu
-                _state.value =
-                    _state.value.copy(timeoutRemaining = remainingTime) // Aktualizujemy stan
-            }
-
-            resetAttempts() // Resetowanie prób po zakończeniu timeoutu
+        sharedPreferences?.edit()?.apply {
+            remove(TIMEOUT_START_KEY)
+            remove(ATTEMPTS_KEY)
+            apply()
         }
+
+
     }
+
+    fun resetNavigation() {
+        _navigationEvent.value = null
+    }
+
+    fun clearState() {
+        _state.value = FormState()
+    }
+
+
+    protected abstract fun onSuccess()
+    protected abstract fun <T> onSuccessWithData(result: T)
+    protected abstract fun onError(error: String)
 
 }

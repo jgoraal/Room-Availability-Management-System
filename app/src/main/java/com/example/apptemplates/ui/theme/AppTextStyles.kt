@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.example.apptemplates.montserratFontFamily
 import com.example.apptemplates.robotoFamily
 import com.example.apptemplates.sarabunFamily
 
@@ -59,6 +60,13 @@ object AppTextStyles {
         color = textColor,
     )
 
+    fun hintStyle(textColor: Color) = TextStyle(
+        fontSize = 14.sp,
+        fontFamily = robotoFamily,
+        fontWeight = FontWeight.Normal,
+        color = textColor,
+    )
+
     fun dialogTitleStyle(textColor: Color) = TextStyle(
         fontSize = 30.sp,
         fontFamily = robotoFamily,
@@ -70,6 +78,29 @@ object AppTextStyles {
         fontSize = 18.sp,
         fontFamily = robotoFamily,
         fontWeight = FontWeight.Normal,
+        color = textColor,
+    )
+
+    fun errorStyle(errorColor: Color) = TextStyle(
+        fontSize = 14.sp,
+        fontFamily = robotoFamily,
+        fontWeight = FontWeight.Bold,
+        color = errorColor,
+        textAlign = TextAlign.Start
+    )
+
+
+    fun topBarTitleStyle(textColor: Color) = TextStyle(
+        fontSize = 28.sp,
+        fontWeight = FontWeight.Bold,
+        fontFamily = montserratFontFamily,
+        color = textColor,
+    )
+
+    fun topBarSubtitleStyle(textColor: Color) = TextStyle(
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Light,
+        fontFamily = montserratFontFamily,
         color = textColor,
     )
 

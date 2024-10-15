@@ -1,32 +1,47 @@
 package com.example.apptemplates.presentation.login.sign_up
 
-import android.util.Log
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.apptemplates.core.Constants.DEBUG_AUTH
-import com.example.apptemplates.data.ActiveUser
-import com.example.apptemplates.data.User
-import com.example.apptemplates.firebase.auth.AuthResponseCollector
-import com.example.apptemplates.firebase.auth.AuthResponseCollector.currentUser
-import com.example.apptemplates.firebase.auth.AuthResult
-import com.example.apptemplates.presentation.login.sign_up.validation.SignUpFormState
-import com.example.apptemplates.presentation.login.sign_up.validation.SignUpUseCase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import com.example.apptemplates.data.user.ActiveUser
+import com.example.apptemplates.form.FormKey
+import com.example.apptemplates.form.UIState
+import com.example.apptemplates.navigation.event.NavigationEvent
+import com.example.apptemplates.viewmodel.BaseLoginViewModel
 
 class SignUpViewModel(
-    private val signUpUseCase: SignUpUseCase = SignUpUseCase(),
-) : ViewModel() {
 
-    private val _signUpFormState = MutableStateFlow(SignUpFormState())
+) : BaseLoginViewModel() {
+
+
+    init {
+        validation
+            .addValidator(FormKey.USERNAME)
+            .addValidator(FormKey.EMAIL)
+            .addValidator(FormKey.DATABASE_USERNAME)
+            .addValidator(FormKey.DATABASE_EMAIL)
+    }
+
+
+    override fun onSuccess() {
+
+        if (state.value.errors.isEmpty()) {
+            ActiveUser.updateUsername(state.value.username)
+            ActiveUser.updateEmail(state.value.email)
+
+            _navigationEvent.tryEmit(NavigationEvent.NavigateOnSuccess)
+            _state.value = _state.value.copy(uiState = UIState.Idle)
+        }
+
+    }
+
+    override fun <T> onSuccessWithData(result: T) {
+        _navigationEvent.tryEmit(NavigationEvent.NavigateOnSuccess)
+    }
+
+    override fun onError(error: String) {
+        _navigationEvent.tryEmit(NavigationEvent.ShowError(error))
+    }
+
+
+    /*private val _signUpFormState = MutableStateFlow(SignUpFormState())
     val signUpFormState: StateFlow<SignUpFormState> = _signUpFormState.asStateFlow()
 
 
@@ -55,7 +70,7 @@ class SignUpViewModel(
 
     fun resendEmailVerification() {
         viewModelScope.launch {
-            val result = AuthResponseCollector.sendEmailVerification()
+            val result = FirebaseAuthManager.sendEmailVerification()
             if (result is AuthResult.Success) {
                 Log.i(DEBUG_AUTH, "Another verification email sent")
             } else {
@@ -100,8 +115,7 @@ class SignUpViewModel(
     override fun onCleared() {
         super.onCleared()
         coroutineScope.cancel() // Zatrzymanie cyklu, gdy ViewModel zostanie usunięty
-    }
-
+    }*/
 
 }
 

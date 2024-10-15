@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.twotone.Login
+import androidx.compose.material.icons.twotone.HowToReg
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,8 +82,9 @@ fun LoginMenu(
                     .clip(RoundedCornerShape(10.dp))
                     .background(Color.Transparent)
                     .animateContentSize()
-                    .width(320.dp),
-                text = Constants.SIGN_IN_BUTTON
+                    .width(260.dp),
+                text = Constants.SIGN_IN_BUTTON,
+                icon = Icons.AutoMirrored.TwoTone.Login
             )
 
 
@@ -94,8 +98,9 @@ fun LoginMenu(
                     .clip(RoundedCornerShape(10.dp))
                     .background(Color.Transparent)
                     .animateContentSize()
-                    .width(320.dp),
-                text = Constants.SIGN_UP_BUTTON
+                    .width(260.dp),
+                text = Constants.SIGN_UP_BUTTON,
+                icon = Icons.TwoTone.HowToReg
             )
 
         }

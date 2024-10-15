@@ -7,34 +7,31 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.example.apptemplates.form.FormKey
+import com.example.apptemplates.form.UIState
+import com.example.apptemplates.navigation.event.NavigationEvent
 import com.example.apptemplates.presentation.login.sign_in.SignInViewModel
 import com.example.apptemplates.presentation.login.sign_in.component.CommonEmailTextField
+import com.example.apptemplates.presentation.login.sign_in.component.CommonLoadingSnackbar
 import com.example.apptemplates.presentation.login.sign_in.component.CommonPasswordTextField
 import com.example.apptemplates.presentation.login.sign_in.component.CommonValidateButton
 import com.example.apptemplates.presentation.login.sign_in.component.Header
 import com.example.apptemplates.presentation.login.sign_in.component.PasswordResetText
 import com.example.apptemplates.presentation.login.sign_in.component.getThemeColors
-import com.example.apptemplates.presentation.login.sign_in.validation.UIState
 
 @Composable
 fun SignIn(
@@ -44,41 +41,43 @@ fun SignIn(
     navigateToReset: () -> Unit
 ) {
 
+
     val focusManager = LocalFocusManager.current
     val theme = getThemeColors()
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
-    // Show Toast when max attempts are exceeded
-    if (state.errors.isNotEmpty()) {
-        LaunchedEffect(Unit) {
-            Toast.makeText(
-                context,
-                state.errors.values.toString(),
-                Toast.LENGTH_LONG
-            ).show()
+    val navigationEvent by viewModel.navigationEvent.collectAsState(initial = null)
+
+    val isLoading = state.uiState == UIState.Loading
+
+
+    LaunchedEffect(navigationEvent) {
+        when (navigationEvent) {
+
+            is NavigationEvent.NavigateOnSuccess -> {
+                Toast.makeText(context, "Witaj ponownie ${state.username}", Toast.LENGTH_LONG)
+                    .show()
+                navigateToHome()
+                viewModel.resetNavigation() // Reset after handling navigation
+                viewModel.clearState()
+            }
+
+            is NavigationEvent.ShowError -> {
+                // Optionally show an error message (Toast, Snackbar, etc.)
+                val error = (navigationEvent as NavigationEvent.ShowError).message
+                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                viewModel.resetNavigation()
+            }
+
+            null -> { /* No event to handle */
+            }
         }
     }
 
     Scaffold(
-        topBar = {
-            // Optional top bar or toolbar
-        },
-        snackbarHost = {
-            if (state.uiState == UIState.Loading) {
-                Snackbar(
-                    action = {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                    }
-                ) {
-                    Text(text = "Loading, please wait...")
-                }
-            }
-        }
+        topBar = { /* Optional top bar or toolbar*/ },
+        snackbarHost = { CommonLoadingSnackbar(isLoading, theme) }
     ) { paddingValues ->
 
         Box(
@@ -100,8 +99,7 @@ fun SignIn(
 
                 // Header
                 Header(
-                    theme = theme,
-                    modifier = Modifier
+                    theme = theme, modifier = Modifier
                         .align(Alignment.Start)
                         .padding(start = 16.dp)
                 )
@@ -111,7 +109,11 @@ fun SignIn(
                 // Email Input
                 CommonEmailTextField(
                     value = state.email,
-                    onValueChange = { viewModel.onStateChange(state.copy(email = it)) },
+                    onValueChange = {
+                        if (state.uiState is UIState.Timeout) return@CommonEmailTextField else viewModel.onStateChange(
+                            state.copy(email = it)
+                        )
+                    },
                     isError = (state.errors[FormKey.EMAIL] != null || state.errors[FormKey.DATABASE_EMAIL] != null),
                     errorText = state.errors[FormKey.EMAIL] ?: state.errors[FormKey.DATABASE_EMAIL],
                     theme = theme
@@ -120,7 +122,11 @@ fun SignIn(
                 // Password Input
                 CommonPasswordTextField(
                     value = state.password,
-                    onValueChange = { viewModel.onStateChange(state.copy(password = it)) },
+                    onValueChange = {
+                        if (state.uiState is UIState.Timeout) return@CommonPasswordTextField else viewModel.onStateChange(
+                            state.copy(password = it)
+                        )
+                    },
                     isError = state.errors[FormKey.PASSWORD] != null,
                     errorText = state.errors[FormKey.PASSWORD],
                     theme = theme
@@ -133,8 +139,7 @@ fun SignIn(
                     onClick = {
                         focusManager.clearFocus()
                         viewModel.authenticate()
-                    },
-                    theme = theme
+                    }, theme = theme
                 )
 
                 Spacer(Modifier.padding(5.dp))

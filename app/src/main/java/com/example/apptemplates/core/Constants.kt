@@ -2,10 +2,14 @@ package com.example.apptemplates.core
 
 object Constants {
 
-    //  App
+    //==================== App Constants ===========================================================
+
     const val TAG = "Roomio"
 
-    //====================Login Menu Screen ========================================================
+    //==============================================================================================
+
+
+    //==================== Login Menu Screen =======================================================
 
     //  Text
     const val WELCOME_TEXT = "Witaj!"
@@ -13,12 +17,12 @@ object Constants {
 
     //  Buttons
     const val SIGN_IN_BUTTON = "Zaloguj się"
-    const val SIGN_UP_BUTTON = "Utwórz nowe konto"
+    const val SIGN_UP_BUTTON = "Utwórz konto"
 
     //==============================================================================================
 
 
-    //====================Sign In Screen ===========================================================
+    //==================== Sign In Screen ==========================================================
 
     //  Header
     const val SIGN_IN_HEADER = "Zaloguj się"
@@ -31,7 +35,7 @@ object Constants {
     //==============================================================================================
 
 
-    //====================Sign Up Screen ===========================================================
+    //==================== Sign Up Screen ==========================================================
 
     //  Header
     const val SIGN_UP_HEADER = "Załóż konto"
@@ -44,7 +48,7 @@ object Constants {
     const val VALIDATE_BUTTON = "Przejdź dalej"
     const val CONFIRM_BUTTON = "Potwierdź"
 
-    // Dialog
+    //  Dialog
     const val DIALOG_TITLE = "Podsumowanie"
     const val DIALOG_TEXT = "Proszę przejrzyj swoje dane i potwierdź rejestrację"
     const val DIALOG_CONFIRM_BUTTON = "Potwierdzam"
@@ -53,16 +57,14 @@ object Constants {
     //==============================================================================================
 
 
-    //=============================Debug ===========================================================
+    //==================== Debug Constants =========================================================
 
     const val DEBUG_AUTH = "AUTH"
     const val DEBUG_DATABASE = "DATABASE"
     const val DEBUG_VALIDATION = "VALIDATION"
 
-
     // Validation message
     const val VALIDATION_FAILED = "Form validation failed"
-
 
     //==============================================================================================
 }

@@ -54,14 +54,14 @@ dependencies {
 
 
     // Import the BoM for the Firebase platform
-    implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
 
     // Add the dependency for the Firebase Authentication library
     // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation("com.google.firebase:firebase-auth")
 
     // Also add the dependency for the Google Play services library and specify its version
-    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    //implementation("com.google.android.gms:play-services-auth:21.2.0")
 
 
     implementation("androidx.core:core-splashscreen:1.0.1") // Splash Screen
@@ -74,8 +74,6 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation("androidx.navigation:navigation-compose:2.8.1")
-
-
 
 
     implementation(libs.androidx.core.ktx)

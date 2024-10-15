@@ -30,3 +30,23 @@ fun getThemeColors(
     )
 
 }
+
+@Composable
+fun getThemeTopAppBarColors(
+    isDarkTheme: Boolean = isSystemInDarkTheme(),
+): ThemeColors {
+
+    val gradientColors = if (isDarkTheme) AppColors.darkGradient else AppColors.lightGradient
+
+
+
+    return ThemeColors(
+        textColor = if (isDarkTheme) AppColors.darkTextColor else AppColors.lightTextColor,
+        buttonBackgroundColor = if (isDarkTheme) AppColors.darkButtonColor else AppColors.buttonLightColor,
+        gradientBrush = Brush.linearGradient(
+            colors = gradientColors,
+            tileMode = TileMode.Mirror
+        )
+
+    )
+}

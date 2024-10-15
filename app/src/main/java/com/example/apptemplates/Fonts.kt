@@ -107,3 +107,16 @@ val sarabunFamily = FontFamily(
     Font(googleFont = sarabunFont, fontProvider = provider, weight = FontWeight.Normal),
     Font(googleFont = sarabunFont, fontProvider = provider, weight = FontWeight.Bold)
 )
+
+// Font for the app title (Montserrat Bold)
+val montserrat = GoogleFont("Montserrat")
+val montserratFontFamily = FontFamily(
+    Font(googleFont = montserrat, fontProvider = provider, weight = FontWeight.W700),
+    Font(googleFont = montserrat, fontProvider = provider, weight = FontWeight.W500)
+)
+
+// Font for the date (Nunito Light)
+val nunito = GoogleFont("Nunito")
+val nunitoFontFamily = FontFamily(
+    Font(googleFont = nunito, fontProvider = provider, weight = FontWeight.W600),
+)

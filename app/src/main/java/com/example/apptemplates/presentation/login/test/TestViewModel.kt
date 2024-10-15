@@ -1,10 +1,13 @@
 package com.example.apptemplates.presentation.login.test
 
-import com.example.apptemplates.firebase.auth.AuthOperationType
+import android.content.SharedPreferences
+import com.example.apptemplates.firebase.auth.operation.AuthOperationType
 import com.example.apptemplates.form.FormKey
 import com.example.apptemplates.viewmodel.BaseLoginViewModel
 
-class TestViewModel : BaseLoginViewModel() {
+class TestViewModel(
+    private val sharedPreferences: SharedPreferences,
+) : BaseLoginViewModel(sharedPreferences) {
 
 
     init {

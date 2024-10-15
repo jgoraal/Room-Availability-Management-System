@@ -27,7 +27,7 @@ fun CommonPasswordTextField(
             value = value,
             onValueChange = onValueChange,
             isError = isError,
-            label = Constants.PASSWORD_LABEL,
+            label = Constants.PASSWORD_CONFIRM_LABEL,
             labelStyle = AppTextStyles.labelStyle(theme.textColor),
             leadingIcon = Icons.TwoTone.Lock,
             textColor = theme.textColor,

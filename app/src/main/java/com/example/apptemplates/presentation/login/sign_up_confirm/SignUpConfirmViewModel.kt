@@ -1,32 +1,47 @@
 package com.example.apptemplates.presentation.login.sign_up_confirm
 
-import android.util.Log
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.apptemplates.core.Constants.DEBUG_VALIDATION
-import com.example.apptemplates.data.ActiveUser
-import com.example.apptemplates.data.User
-import com.example.apptemplates.firebase.auth.AuthResponse
-import com.example.apptemplates.firebase.auth.AuthResponseCollector
-import com.example.apptemplates.firebase.auth.AuthResponseCollector.currentUser
-import com.example.apptemplates.firebase.auth.AuthResult
-import com.example.apptemplates.firebase.database.Database
-import com.example.apptemplates.firebase.database.FirestoreDatabase
-import com.example.apptemplates.firebase.database.FirestoreResult
-import com.example.apptemplates.presentation.login.sign_up.validation.SignUpFormState
-import com.example.apptemplates.presentation.login.sign_up.validation.SignUpUseCase
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import com.example.apptemplates.data.user.ActiveUser
+import com.example.apptemplates.firebase.auth.operation.AuthOperationType
+import com.example.apptemplates.form.FormKey
+import com.example.apptemplates.navigation.event.NavigationEvent
+import com.example.apptemplates.viewmodel.BaseLoginViewModel
 
 class SignUpConfirmViewModel(
-    private val signUpUseCase: SignUpUseCase = SignUpUseCase(),
-    private val repository: AuthResponse = AuthResponseCollector,
-    private val database: FirestoreDatabase = Database
-) : ViewModel() {
+) : BaseLoginViewModel() {
 
-    private val _signUpFormState = MutableStateFlow(
+
+    init {
+        validation
+            .addValidator(FormKey.PASSWORD)
+            .addValidator(FormKey.CONFIRM_PASSWORD)
+
+        authManager
+            .addOperation(AuthOperationType.SIGN_UP)
+
+        onStateChange(
+            state.value.copy(
+                username = ActiveUser.getUser()!!.username,
+                email = ActiveUser.getUser()!!.email
+            )
+        )
+        ActiveUser.clearUser()
+    }
+
+
+    override fun onSuccess() {
+        _navigationEvent.tryEmit(NavigationEvent.NavigateOnSuccess)
+    }
+
+    override fun <T> onSuccessWithData(result: T) {
+        _navigationEvent.tryEmit(NavigationEvent.NavigateOnSuccess)
+    }
+
+    override fun onError(error: String) {
+        _navigationEvent.tryEmit(NavigationEvent.ShowError(error))
+    }
+
+
+    /*private val _signUpFormState = MutableStateFlow(
         SignUpFormState().copy(
             username = ActiveUser.getUser()!!.username,
             email = ActiveUser.getUser()!!.email
@@ -143,5 +158,5 @@ class SignUpConfirmViewModel(
                 onDismiss("Failed to add user to database")
             }
         }
-    }
+    }*/
 }

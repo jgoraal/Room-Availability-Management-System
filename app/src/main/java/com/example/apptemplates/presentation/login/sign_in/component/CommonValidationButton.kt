@@ -17,13 +17,14 @@ import com.example.apptemplates.ui.theme.ThemeColors
 @Composable
 fun CommonValidateButton(
     onClick: () -> Unit,
+    text: String = Constants.SIGN_IN_BUTTON,
     theme: ThemeColors
 ) {
 
     Column {
         CustomButton(
             onClick = onClick,
-            text = Constants.SIGN_IN_BUTTON,
+            text = text,
             color = theme.buttonBackgroundColor,
             border = BorderStroke(2.dp, theme.textColor),
             textColor = theme.textColor,
@@ -32,7 +33,7 @@ fun CommonValidateButton(
                 .clip(RoundedCornerShape(10.dp))
                 .padding(horizontal = 16.dp)
                 .padding(top = 16.dp)
-                .width(320.dp),
+                .width(250.dp),
         )
     }
 

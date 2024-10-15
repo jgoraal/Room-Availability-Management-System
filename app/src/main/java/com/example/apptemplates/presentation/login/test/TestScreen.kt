@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.apptemplates.form.FormKey
-import com.example.apptemplates.presentation.login.sign_in.validation.UIState
+import com.example.apptemplates.form.UIState
 
 
 @Composable
@@ -61,7 +61,9 @@ fun TestScreen(
         TextField(
             value = formState.email,
             onValueChange = { email ->
-                viewModel.onStateChange(formState.copy(email = email))
+                if (formState.uiState is UIState.Timeout) return@TextField else viewModel.onStateChange(
+                    formState.copy(email = email)
+                )
             },
             label = { Text("Email") },
             isError = formState.errors[FormKey.EMAIL] != null,

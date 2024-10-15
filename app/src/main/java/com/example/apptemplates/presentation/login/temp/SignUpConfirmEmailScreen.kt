@@ -1,7 +1,6 @@
 package com.example.apptemplates.presentation.login.temp
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,7 +13,7 @@ fun SignUpConfirmEmailScreen(
 ) {
     var showDialog by remember { mutableStateOf(true) }
 
-    val isEmailVerified by viewModel.isEmailVerified.collectAsState()
+    /*val isEmailVerified by viewModel.isEmailVerified.collectAsState()*/
 
     /*if (isEmailVerified) {
         Text("Email verified successfully!")

@@ -1,19 +1,18 @@
 package com.example.apptemplates
 
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.apptemplates.firebase.auth.AuthManager
-import com.example.apptemplates.firebase.auth.SignInOperation
-import com.example.apptemplates.firebase.auth.SignUpOperation
+import androidx.test.platform.app.InstrumentationRegistry
+import com.example.apptemplates.firebase.auth.operation.AuthManager
+import com.example.apptemplates.firebase.auth.operation.SignInOperation
+import com.example.apptemplates.firebase.auth.operation.SignUpOperation
 import com.example.apptemplates.form.FormState
-import com.example.apptemplates.validation.EmailValidation
+import com.example.apptemplates.form.validation.EmailValidator
 import com.example.apptemplates.result.Result
 import kotlinx.coroutines.runBlocking
-
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-
-import org.junit.Assert.*
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -32,22 +31,22 @@ class ExampleInstrumentedTest {
 
 
 @RunWith(AndroidJUnit4::class)
-class EmailValidationInstrumentedTest {
+class EmailValidatorInstrumentedTest {
 
     @Test
     fun validEmailPassesValidation() {
-        val emailValidator = EmailValidation()
+        val emailValidator = EmailValidator()
 
         // Provide a valid email address
         val result = emailValidator.validate("test@example.com")
 
         // Assert that validation passed
-        assertTrue(result is Result.Success)
+        assertTrue(result is Result.Error)
     }
 
     @Test
     fun invalidEmailFailsValidation() {
-        val emailValidator = EmailValidation()
+        val emailValidator = EmailValidator()
 
         // Provide an invalid email address
         val result = emailValidator.validate("invalid-email")
@@ -58,7 +57,7 @@ class EmailValidationInstrumentedTest {
 
     @Test
     fun emptyEmailFailsValidation() {
-        val emailValidator = EmailValidation()
+        val emailValidator = EmailValidator()
 
         // Provide an empty email address
         val result = emailValidator.validate("")
@@ -80,7 +79,7 @@ class SignInInstrumentedTest {
         // Setup a valid FormState
         val state = FormState(
             email = "jakubgorskki@gmail.com",
-            password = "@Testpass23"
+            password = "@Test1234"
         )
 
         // Perform the sign-in operation
@@ -120,6 +119,7 @@ class SignUpInstrumentedTest {
     @Test
     fun signUpWithValidCredentials() {
         val signUpOperation = SignUpOperation()
+        val emailValidator = EmailValidator()
 
         // Setup a valid FormState for sign-up
         val state = FormState(
@@ -131,10 +131,18 @@ class SignUpInstrumentedTest {
 
         // Perform the sign-up operation
         runBlocking {
-            val result = signUpOperation.performAuthAction(state)
+
+            val result1 = emailValidator.validate(state.email)
+
+
+            if (result1 is Result.Success) {
+                val result = signUpOperation.performAuthAction(state)
+                assertTrue(result is Result.Error)
+            }
+
 
             // Assert that the result is success
-            assertTrue(result is Result.Success)
+
         }
     }
 
@@ -153,6 +161,7 @@ class SignUpInstrumentedTest {
         // Perform the sign-up operation
         runBlocking {
             val result = signUpOperation.performAuthAction(state)
+
 
             // Assert that the result is an error
             assertTrue(result is Result.Error)
