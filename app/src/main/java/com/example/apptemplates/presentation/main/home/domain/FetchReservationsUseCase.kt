@@ -6,8 +6,8 @@ import com.example.apptemplates.result.Result
 
 class FetchReservationsUseCase {
 
-    suspend operator fun invoke(): List<Reservation> {
-        return when (val result = ReservationsRepositoryImpl.fetchReservations()) {
+    suspend operator fun invoke(userId: String): List<Reservation> {
+        return when (val result = ReservationsRepositoryImpl.fetchReservations(userId)) {
             is Result.SuccessWithResult -> result.data ?: emptyList()
             is Result.Error -> throw Exception(result.error)
             else -> emptyList()

@@ -71,4 +71,22 @@ object RoomRepositoryImpl : RoomRepository {
         }
     }
 
+    suspend fun fetchAvailableRooms(lessons: List<String>): Result<List<Room>> {
+        return try {
+
+            val snapshot = database
+                .collection("rooms")
+                .get().await()
+
+
+            val availableRooms = snapshot.toObjects(Room::class.java)
+                .filter { it.id !in lessons }
+                .sortedBy { it.name }
+
+            Result.SuccessWithResult(availableRooms)
+        } catch (e: Exception) {
+            Result.Error(e.message ?: "Unknown error")
+        }
+    }
+
 }

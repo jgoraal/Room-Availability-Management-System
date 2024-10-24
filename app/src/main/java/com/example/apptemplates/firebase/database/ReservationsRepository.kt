@@ -8,7 +8,7 @@ interface ReservationsRepository {
     val database: FirebaseFirestore
 
 
-    suspend fun fetchReservations(): Result<List<Reservation>>
+    suspend fun fetchReservations(userId: String): Result<List<Reservation>>
     suspend fun addReservation(reservation: Reservation): Result<Nothing>
     suspend fun updateReservation(reservation: Reservation): Result<Nothing>
     suspend fun deleteReservation(reservationId: String): Result<Nothing>

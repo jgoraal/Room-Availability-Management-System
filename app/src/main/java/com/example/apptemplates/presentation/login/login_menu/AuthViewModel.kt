@@ -68,6 +68,21 @@ class AuthViewModel : ViewModel() {
 
             if (user != null) {
                 ActiveUser.setUser(user)
+
+                if (firebaseUser.isEmailVerified && !user.isVerified) {
+                    when (FirestoreRepository.updateUser(user.copy(isVerified = true))) {
+                        is FirestoreResult.Success -> {
+                            ActiveUser.setUser(user.copy(isVerified = true))
+                        }
+
+                        is FirestoreResult.Failure -> {
+                            ActiveUser.setUser(user.copy(isVerified = false))
+                        }
+
+                        else -> {}
+                    }
+                }
+
                 _isUserAuthenticated.value = true
             } else {
                 Log.e("AUTH", "User not found in Firestore")
