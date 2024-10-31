@@ -9,7 +9,6 @@ import com.example.apptemplates.firebase.auth.FirebaseAuthManager
 import com.example.apptemplates.firebase.database.FirestoreRepository
 import com.example.apptemplates.firebase.database.result.FirestoreResult
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,87 +17,72 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
 
-    // StateFlow to observe if the user is authenticated
-    private val _isUserAuthenticated = MutableStateFlow(false)
-    val isUserAuthenticated: StateFlow<Boolean> = _isUserAuthenticated.asStateFlow()
+    private val state = MutableStateFlow(false)
+    val isUserAuthenticated: StateFlow<Boolean> = state.asStateFlow()
 
     init {
         checkUserAuthentication()
     }
 
-    // Private function to check user authentication status
-    private fun checkUserAuthentication() {
-        viewModelScope.launch {
-            try {
-                val firebaseUser = FirebaseAuthManager.currentUser
-                if (firebaseUser != null) {
-                    setUserAuthenticated(firebaseUser)
-                } else {
-                    Log.i("AUTH", "No user authenticated")
-                    _isUserAuthenticated.value = false
-                }
-            } catch (e: FirebaseAuthException) {
-                Log.e("AUTH", "Firebase Authentication error: ${e.message}", e)
-                _isUserAuthenticated.value = false
-            } catch (e: Exception) {
-                Log.e("AUTH", "Unexpected error: ${e.message}", e)
-                _isUserAuthenticated.value = false
-            }
-        }
+    /**
+     * Checks if a user is already authenticated in FirebaseAuth.
+     */
+    private fun checkUserAuthentication() = viewModelScope.launch {
+        val firebaseUser = FirebaseAuthManager.currentUser
+        firebaseUser?.let { setUserAuthenticated(it) } ?: updateState(false)
     }
 
-    // Sets the authenticated user and updates the state
+    /**
+     * Fetches and sets the authenticated user details from Firestore.
+     */
     private suspend fun setUserAuthenticated(firebaseUser: FirebaseUser) {
-        try {
-            Log.i("AUTH", "User authenticated")
-
-            val user = when (val result = FirestoreRepository.getUser(firebaseUser.uid)) {
-                is FirestoreResult.SuccessWithResult<*> -> {
-                    result.data as User
-                }
-
-                is FirestoreResult.Failure -> {
-                    throw result.exception
-                }
-
-                else -> {
-                    null
-                }
-            }
-
-            if (user != null) {
-                ActiveUser.setUser(user)
-
-                if (firebaseUser.isEmailVerified && !user.isVerified) {
-                    when (FirestoreRepository.updateUser(user.copy(isVerified = true))) {
-                        is FirestoreResult.Success -> {
-                            ActiveUser.setUser(user.copy(isVerified = true))
-                        }
-
-                        is FirestoreResult.Failure -> {
-                            ActiveUser.setUser(user.copy(isVerified = false))
-                        }
-
-                        else -> {}
-                    }
-                }
-
-                _isUserAuthenticated.value = true
-            } else {
-                Log.e("AUTH", "User not found in Firestore")
-                _isUserAuthenticated.value = false
-            }
-
-        } catch (e: Exception) {
-            Log.e("AUTH", "Error retrieving user from Firestore: ${e.message}", e)
-            _isUserAuthenticated.value = false
+        val user = fetchUserFromFirestore(firebaseUser.uid) ?: run {
+            Log.e("AuthViewModel", "User not found in Firestore")
+            return updateState(false)
         }
+
+        val isEmailVerified = firebaseUser.isEmailVerified
+        if (isEmailVerified && !user.isVerified) {
+            val updatedUser = user.copy(isVerified = true)
+            val updateResult = FirestoreRepository.updateUser(updatedUser)
+            if (updateResult is FirestoreResult.Success) {
+                ActiveUser.setUser(updatedUser)
+                return updateState(true)
+            }
+        }
+
+        ActiveUser.setUser(user.copy(isVerified = isEmailVerified))
+        updateState(isEmailVerified)
     }
 
-    // Logout function to clear user authentication
+    /**
+     * Logs out the current user by clearing FirebaseAuth and ActiveUser data.
+     */
     fun logout() {
         FirebaseAuth.getInstance().signOut()
         ActiveUser.clearUser()
-        _isUserAuthenticated.value = false
+        updateState(false)
+    }
+
+    /**
+     * Retrieves user information from Firestore based on UID.
+     */
+    private suspend fun fetchUserFromFirestore(uid: String): User? {
+        return when (val result = FirestoreRepository.getUser(uid)) {
+            is FirestoreResult.SuccessWithResult<*> -> result.data as? User
+            is FirestoreResult.Failure -> {
+                Log.e("AuthViewModel", "Error retrieving user: ${result.exception}")
+                null
+            }
+
+            else -> null
+        }
+    }
+
+    /**
+     * Updates the authentication state.
+     */
+    private fun updateState(isAuthenticated: Boolean) {
+        state.value = isAuthenticated
     }
 }

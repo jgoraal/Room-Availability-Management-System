@@ -46,7 +46,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -59,10 +58,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.apptemplates.BottomBarPreview
-import com.example.apptemplates.TopBarPreview
+import androidx.navigation.NavController
 import com.example.apptemplates.data.reservation.RecurrenceFrequency
 import com.example.apptemplates.data.room.EquipmentType
 import com.example.apptemplates.data.room.Room
@@ -71,6 +68,7 @@ import com.example.apptemplates.presentation.main.reservation.components.Availab
 import com.example.apptemplates.presentation.main.reservation.components.CalendarViewWithNavigation
 import com.example.apptemplates.presentation.main.reservation.components.NumberOfAttendeesView
 import com.example.apptemplates.presentation.main.reservation.components.TimePickerView
+import com.example.apptemplates.presentation.main.temp.MainUiState
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -94,28 +92,28 @@ data class ReservationState(
     val availableRooms: List<Room> = emptyList()
 )
 
-@Preview(showBackground = true)
 @Composable
 fun ReservationScreen(
     viewModel: ReservationViewModel = ReservationViewModel(),
+    navController: NavController,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier
 ) {
 
     val state by viewModel.state.collectAsState()
 
 
-    Scaffold(topBar = {
+    /*Scaffold(topBar = {
         TopBarPreview() // Your existing top bar
     }, bottomBar = {
-        BottomBarPreview() // Your existing bottom bar
+        BottomBar(navController) // Your existing bottom bar
     }, content = { padding ->
         ReservationView(state, viewModel, modifier.padding(padding))
-    })
+    })*/
 }
 
 @Composable
 fun ReservationView(
-    state: ReservationState, viewModel: ReservationViewModel, modifier: Modifier = Modifier
+    state: MainUiState, viewModel: ReservationViewModel, modifier: Modifier = Modifier
 ) {
     // Main LazyColumn for the form elements, excluding the room list
     LazyColumn(
@@ -155,7 +153,7 @@ fun ReservationView(
 
 
 @Composable
-fun AdditionalFiltersPicker(viewModel: ReservationViewModel, state: ReservationState) {
+fun AdditionalFiltersPicker(viewModel: ReservationViewModel, state: MainUiState) {
     var isAdditionalFiltersVisible by remember { mutableStateOf(false) }
     val availableEquipment = listOf(
         EquipmentType.COMPUTER, EquipmentType.PROJECTOR, EquipmentType.WHITEBOARD
@@ -285,7 +283,7 @@ fun DropdownMenuFloorPicker(selectedFloor: Int, onFloorSelected: (Int) -> Unit) 
 
 
 @Composable
-fun SelectedData(state: ReservationState) {
+fun SelectedData(state: MainUiState) {
 
     Column(
         modifier = Modifier
@@ -392,7 +390,7 @@ fun DataRow(icon: ImageVector, label: String, value: String) {
 
 @Composable
 fun TimePicker(
-    state: ReservationState, viewModel: ReservationViewModel, label: String
+    state: MainUiState, viewModel: ReservationViewModel, label: String
 ) {
     var isTimePickerVisible by remember { mutableStateOf(false) }
 
@@ -444,7 +442,7 @@ fun TimePicker(
 
 
 @Composable
-fun NumberOfAttendeesSelector(viewModel: ReservationViewModel, state: ReservationState) {
+fun NumberOfAttendeesSelector(viewModel: ReservationViewModel, state: MainUiState) {
     var isNumberOfAttendeesVisible by remember { mutableStateOf(false) }
 
     Column(
@@ -491,7 +489,7 @@ fun NumberOfAttendeesSelector(viewModel: ReservationViewModel, state: Reservatio
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CalendarPicker(state: ReservationState, viewModel: ReservationViewModel) {
+fun CalendarPicker(state: MainUiState, viewModel: ReservationViewModel) {
     var isCalendarVisible by remember { mutableStateOf(false) }
 
 
@@ -560,7 +558,7 @@ fun CalendarPicker(state: ReservationState, viewModel: ReservationViewModel) {
 
 @Composable
 fun CalendarEndDatePicker(
-    modifier: Modifier = Modifier, viewModel: ReservationViewModel, state: ReservationState
+    modifier: Modifier = Modifier, viewModel: ReservationViewModel, state: MainUiState
 ) {
     var isCalendarVisible by remember { mutableStateOf(false) }
     val showEndDatePicker by remember { mutableStateOf(true) }

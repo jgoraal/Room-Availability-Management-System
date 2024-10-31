@@ -6,12 +6,13 @@ import androidx.navigation.compose.NavHost
 import com.example.apptemplates.navigation.route.AppScreen
 
 @Composable
-fun RootNavGraph(navHostController: NavHostController) {
+fun RootNavGraph(navController: NavHostController, isUserAuthenticated: Boolean) {
     NavHost(
-        navController = navHostController,
-        startDestination = AppScreen.Auth.route
+        navController = navController,
+        startDestination = if (!isUserAuthenticated) "main_graph" else AppScreen.Auth.route
     ) {
-        authNavGraph(navHostController)
-        mainNavGraph(navHostController)
+        authNavGraph(navController)
+        mainNavGraph(navController)
     }
 }
+

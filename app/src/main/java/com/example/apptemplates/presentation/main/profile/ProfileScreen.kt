@@ -26,7 +26,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -40,33 +39,33 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.apptemplates.BottomBarPreview
+import androidx.navigation.NavController
 import com.example.apptemplates.R
-import com.example.apptemplates.TopBarPreview
+import com.example.apptemplates.presentation.main.temp.MainUiState
 import com.example.apptemplates.ui.theme.AppTextStyles
 
-@Preview(showBackground = true)
+
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = ProfileViewModel(),
+    navController: NavController
 ) {
 
     val state by viewModel.state.collectAsState()
 
 
-    Scaffold(
+    /*Scaffold(
         topBar = { TopBarPreview() },
-        bottomBar = { BottomBarPreview() },
+        bottomBar = { BottomBar(navController) },
         content = { padding -> ProfileView(state, viewModel, padding) }
-    )
+    )*/
 
 }
 
 @Composable
-fun ProfileView(state: ProfileState, viewModel: ProfileViewModel, padding: PaddingValues) {
+fun ProfileView(state: MainUiState, viewModel: ProfileViewModel, padding: PaddingValues) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -258,9 +257,4 @@ fun StatItem(stat: String, label: String) {
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
         )
     }
-}
-
-fun formatLastSeen(lastSeen: Long): String {
-    // Here, you can convert the last seen timestamp into a human-readable format
-    return "5 minutes ago" // Placeholder
 }

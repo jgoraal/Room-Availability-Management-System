@@ -6,13 +6,11 @@ import com.example.apptemplates.presentation.login.login_menu.components.LoginMe
 
 @Composable
 fun LoginMenuScreen(
-    viewModel: AuthViewModel,
     navigateToSignIn: () -> Unit,
     navigateToSignUp: () -> Unit
 ) {
 
     LoginMenu(
-        viewModel = viewModel,
         navigateToSignIn = navigateToSignIn,
         navigateToSignUp = navigateToSignUp
     )

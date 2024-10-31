@@ -141,6 +141,7 @@ fun SignUp(
                     onClick = {
                         focusManager.clearFocus()
                         viewModel.authenticate()
+
                     }, theme = theme, text = Constants.VALIDATE_BUTTON
                 )
 

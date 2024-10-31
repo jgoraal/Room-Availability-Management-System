@@ -3,7 +3,6 @@ package com.example.apptemplates.presentation.main.reservation
 import android.util.Log
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TimePickerState
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.apptemplates.data.reservation.RecurrenceFrequency
 import com.example.apptemplates.data.reservation.Reservation
@@ -20,9 +19,7 @@ import com.example.apptemplates.presentation.main.reservation.domain.FetchRecurr
 import com.example.apptemplates.presentation.main.reservation.domain.FetchStandardReservationsUseCase
 import com.example.apptemplates.presentation.main.reservation.generator.generateTestRecurringReservation
 import com.example.apptemplates.presentation.main.reservation.generator.generateTestReservation
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.apptemplates.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -37,10 +34,7 @@ class ReservationViewModel(
     private val addReservation: AddReservationUseCase = AddReservationUseCase(),
     private val addLesson: AddLessonUseCase = AddLessonUseCase(),
     private val addRoom: AddRoomUseCase = AddRoomUseCase(),
-) : ViewModel() {
-
-    private val _state = MutableStateFlow(ReservationState())
-    val state: StateFlow<ReservationState> = _state.asStateFlow()
+) : MainViewModel() {
 
 
     /*init {
@@ -94,23 +88,6 @@ class ReservationViewModel(
                 }
             )
         }
-    }
-
-
-    private suspend fun <T> wrapWithLoadingState(
-        successState: (T) -> Unit, errorState: (String) -> Unit, block: suspend () -> T
-    ) {
-        _state.update { it.copy(screenState = ScreenState.Loading) }
-
-        try {
-            val result = block()
-            successState(result)
-        } catch (e: Exception) {
-            errorState(e.localizedMessage ?: "An unknown error occurred")
-
-            Log.e("Error", e.printStackTrace().toString())
-        }
-
     }
 
 

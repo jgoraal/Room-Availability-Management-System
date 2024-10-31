@@ -38,11 +38,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.apptemplates.presentation.main.reservation.ReservationState
 import com.example.apptemplates.presentation.main.reservation.getNameInPolish
+import com.example.apptemplates.presentation.main.temp.MainUiState
 
 @Composable
-fun AvailableRoomsList(state: ReservationState) {
+fun AvailableRoomsList(state: MainUiState) {
     val roomCardHeight = 320.dp  // Approximate height of each room card
     val availableRoomCount = state.availableRooms.size
     val totalHeight = if (availableRoomCount > 0) {

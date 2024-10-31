@@ -23,7 +23,7 @@ class AuthManager {
         return this
     }
 
-    private fun getOperation(type: AuthOperationType): AuthOperation? {
+    private fun getOperation(type: AuthOperationType): AuthOperation {
         return when (type) {
             AuthOperationType.SIGN_IN -> SignInOperation()
             AuthOperationType.SIGN_UP -> SignUpOperation()

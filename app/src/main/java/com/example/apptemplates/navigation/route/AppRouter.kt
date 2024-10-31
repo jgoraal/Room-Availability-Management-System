@@ -1,5 +1,23 @@
 package com.example.apptemplates.navigation.route
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.apptemplates.navigation.route.Routes.HOME
+import com.example.apptemplates.navigation.route.Routes.LOG_OUT
+import com.example.apptemplates.navigation.route.Routes.MAIN
+import com.example.apptemplates.navigation.route.Routes.MORE
+import com.example.apptemplates.navigation.route.Routes.PROFILE
+import com.example.apptemplates.navigation.route.Routes.RESERVATION
+import com.example.apptemplates.navigation.route.Routes.ROOM_AVAILABILITY
+import com.example.apptemplates.navigation.route.Routes.SETTINGS
+
 private object Routes {
 
     // Login Graph Route
@@ -9,34 +27,43 @@ private object Routes {
     const val RESET_PASSWORD = "reset_password"
     const val SIGN_UP = "sign_up"
     const val SIGN_UP_CONFIRM = "sign_up_confirm"
-    const val SIGN_UP_CONFIRM_EMAIL = "sign_up_confirm_email"
 
 
     // Main Graph Route
     const val MAIN = "main"
     const val HOME = "home"
     const val RESERVATION = "reservation"
+    const val ROOM_AVAILABILITY = "room_availability"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
+    const val LOG_OUT = "log_out"
+    const val MORE = "more"
 
 }
 
-sealed class AppScreen(val route: String) {
-
-    data object Auth : AppScreen(Routes.AUTH) {
-        data object LoginMenu : AppScreen(Routes.LOGIN_MENU)
-        data object SignIn : AppScreen(Routes.SIGN_IN)
-        data object ResetPassword : AppScreen(Routes.RESET_PASSWORD)
-        data object SignUp : AppScreen(Routes.SIGN_UP)
-        data object SignUpConfirm : AppScreen(Routes.SIGN_UP_CONFIRM)
-        data object SignUpConfirmEmail : AppScreen(Routes.SIGN_UP_CONFIRM_EMAIL)
+// AppScreen.kt - Define Routes
+sealed class AppScreen(
+    val route: String,
+    val icon: ImageVector? = null,
+    val label: String? = null
+) {
+    data object Auth : AppScreen("auth") {
+        data object LoginMenu : AppScreen("login_menu")
+        data object SignIn : AppScreen("sign_in")
+        data object ResetPassword : AppScreen("reset_password")
+        data object SignUp : AppScreen("sign_up")
+        data object SignUpConfirm : AppScreen("sign_up_confirm")
     }
 
-    data object Main : AppScreen(Routes.MAIN) {
-        data object Home : AppScreen(Routes.HOME)
-        data object Reservation : AppScreen(Routes.RESERVATION)
-        data object Profile : AppScreen(Routes.PROFILE)
-        data object Settings : AppScreen(Routes.SETTINGS)
+    data object Main : AppScreen(MAIN) {
+        data object Home : AppScreen(HOME, Icons.Default.Home, "Strona Główna")
+        data object Reservation : AppScreen(RESERVATION, Icons.Default.Bookmarks, "Rezerwacje")
+        data object RoomAvailability :
+            AppScreen(ROOM_AVAILABILITY, Icons.Default.CalendarMonth, "Terminarz")
 
+        data object Profile : AppScreen(PROFILE, Icons.Default.AccountCircle, "Profil")
+        data object Settings : AppScreen(SETTINGS, Icons.Default.Settings, "Ustawienia")
+        data object LogOut : AppScreen(LOG_OUT, Icons.AutoMirrored.Filled.Logout, "Wyloguj")
+        data object More : AppScreen(MORE, Icons.Default.Menu, "Więcej")
     }
 }

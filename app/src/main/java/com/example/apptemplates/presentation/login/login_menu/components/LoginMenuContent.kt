@@ -24,14 +24,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.apptemplates.core.Constants
-import com.example.apptemplates.presentation.login.login_menu.AuthViewModel
 
 
 //  Login Menu Screen Component ====================================================================
 
 @Composable
 fun LoginMenu(
-    viewModel: AuthViewModel,
     navigateToSignIn: () -> Unit,
     navigateToSignUp: () -> Unit
 ) {

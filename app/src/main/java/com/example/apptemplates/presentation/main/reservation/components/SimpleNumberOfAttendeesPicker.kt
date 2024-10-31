@@ -32,14 +32,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.apptemplates.presentation.main.reservation.ReservationState
 import com.example.apptemplates.presentation.main.reservation.ReservationViewModel
+import com.example.apptemplates.presentation.main.temp.MainUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NumberOfAttendeesView(
     viewModel: ReservationViewModel,
-    state: ReservationState,
+    state: MainUiState,
     modifier: Modifier = Modifier
 ) {
 

@@ -1,30 +1,77 @@
 package com.example.apptemplates.presentation.main.home
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.apptemplates.data.user.ActiveUser
-import com.example.apptemplates.form.HomeUiState
 import com.example.apptemplates.form.ScreenState
 import com.example.apptemplates.form.UiError
 import com.example.apptemplates.presentation.main.home.domain.AddRoomUseCase
 import com.example.apptemplates.presentation.main.home.domain.FetchReservationsUseCase
 import com.example.apptemplates.presentation.main.home.domain.FetchRoomsUseCase
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.apptemplates.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val fetchRoomsUseCase: FetchRoomsUseCase = FetchRoomsUseCase(),
     private val fetchReservationsUseCase: FetchReservationsUseCase = FetchReservationsUseCase(),
     private val addRoomUseCase: AddRoomUseCase = AddRoomUseCase()
-) : ViewModel() {
+) : MainViewModel() {
 
-    // StateFlow to represent the UI state
+
+    init {
+        loadInitialData()
+    }
+
+    private fun loadInitialData() {
+        wrapWithLoadingState(
+            successState = { data ->
+                _state.update {
+                    it.copy(
+                        rooms = data.first,
+                        reservations = data.second,
+                        screenState = ScreenState.Success
+                    )
+                }
+            },
+            errorState = { message ->
+                _state.update {
+                    it.copy(
+                        screenState = ScreenState.Error(UiError.DatabaseError(message))
+                    )
+                }
+            }
+        ) {
+            val user = ActiveUser.getUser()
+            val rooms = fetchRoomsUseCase()
+            val reservations = fetchReservationsUseCase(user!!.uid)
+            rooms to reservations
+        }
+    }
+
+    fun refreshRooms() {
+        wrapWithLoadingState(
+            successState = { data ->
+                _state.update {
+                    it.copy(
+                        rooms = data.first,
+                        reservations = data.second,
+                        screenState = ScreenState.Success
+                    )
+                }
+            },
+            errorState = { message ->
+                _state.update {
+                    it.copy(
+                        screenState = ScreenState.Error(UiError.DatabaseError(message))
+                    )
+                }
+            }
+        ) {
+            val rooms = fetchRoomsUseCase()
+            val reservations = fetchReservationsUseCase(_state.value.user!!.uid)
+            rooms to reservations
+        }
+    }
+
+    /*// StateFlow to represent the UI state
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -127,20 +174,14 @@ class HomeViewModel(
             errorState(e.localizedMessage ?: "An unknown error occurred")
         }
 
-    }
+    }*/
 
-
-    fun navigateToProfile() {
-        viewModelScope.launch {
-            _eventFlow.emit(UiEvent.NavigateToProfile)
-        }
-    }
 
 }
 
 
 sealed class UiEvent {
     data object NavigateToProfile : UiEvent()
-    data class ShowSnackbar(val message: String) : UiEvent()
+    data class ShowSnackBar(val message: String) : UiEvent()
 }
 

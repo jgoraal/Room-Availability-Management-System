@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.apptemplates.navigation.route.AppScreen
 import com.example.apptemplates.presentation.login.sign_in.component.getThemeTopAppBarColors
 
 @Preview(showBackground = true)
@@ -41,10 +42,10 @@ fun BottomBarPreview() {
 
     // List of bottom bar items (you can customize this list)
     val items = listOf(
-        BottomBarItem(Icons.Default.Home, "Home"),
-        BottomBarItem(Icons.Default.Search, "Search"),
-        BottomBarItem(Icons.Default.Favorite, "Favorites"),
-        BottomBarItem(Icons.Default.Person, "Profile")
+        BottomBarItem(Icons.Default.Home, "Strona Główna", AppScreen.Main.Home),
+        BottomBarItem(Icons.Default.Bookmarks, "Rezerwacje", AppScreen.Main.Reservation),
+        BottomBarItem(Icons.Default.CalendarMonth, "Dostępność", AppScreen.Main.RoomAvailability),
+        BottomBarItem(Icons.Default.Menu, "Ustawienia", AppScreen.Main.Settings)
     )
 
     // Remember the currently selected item index
@@ -82,12 +83,17 @@ fun BottomBarPreview() {
                             text = item.label,
                             fontFamily = montserratFontFamily,
                             fontWeight = FontWeight.Medium,
-                            fontSize = 13.sp, // Slightly larger font size for better readability
+                            fontSize = 10.sp, // Slightly larger font size for better readability
                             modifier = Modifier.padding(bottom = 4.dp) // Add some padding below the text
                         )
                     },
                     selected = isSelected,
-                    onClick = { selectedIndex = index },
+                    onClick = {
+                        if (selectedIndex == index) {
+
+                        }
+                        selectedIndex = index
+                    },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = theme.textColor,
                         unselectedIconColor = if (isDarkTheme) Color(0xFFD1D1D1) else Color(
@@ -107,7 +113,7 @@ fun BottomBarPreview() {
 }
 
 // Helper data class for BottomBar items
-data class BottomBarItem(val icon: ImageVector, val label: String)
+data class BottomBarItem(val icon: ImageVector, val label: String, val route: AppScreen)
 
 
 

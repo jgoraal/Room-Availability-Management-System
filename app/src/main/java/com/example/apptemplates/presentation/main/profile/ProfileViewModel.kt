@@ -1,14 +1,43 @@
 package com.example.apptemplates.presentation.main.profile
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.apptemplates.form.ScreenState
+import com.example.apptemplates.form.UiError
+import com.example.apptemplates.presentation.main.profile.domain.SignOutUseCase
+import com.example.apptemplates.viewmodel.MainViewModel
+import kotlinx.coroutines.flow.update
 
-class ProfileViewModel {
+class ProfileViewModel(
+    private val signOutUseCase: SignOutUseCase = SignOutUseCase()
+) : MainViewModel() {
 
 
-    private val _state = MutableStateFlow(ProfileState())
-    val state: StateFlow<ProfileState> = _state.asStateFlow()
+    fun signOut() {
+
+
+        wrapWithLoadingState(
+            successState = {
+                _state.update { it.copy(screenState = ScreenState.Success) }
+
+
+            },
+            errorState = { message ->
+                _state.update {
+                    it.copy(
+                        screenState = ScreenState.Error(
+                            UiError.UnknownError(
+                                message
+                            )
+                        )
+                    )
+                }
+            },
+            {
+                signOutUseCase()
+            }
+        )
+
+
+    }
 
 
 }
@@ -19,5 +48,6 @@ data class ProfileState(
     val email: String = "jakubgorskki@gmail.com",
     val isEmailVerified: Boolean = true,
     val overallReservationCount: Int = 2,
-    val lastSeen: Long = 1
+    val lastSeen: Long = 1,
+    val screenState: ScreenState = ScreenState.Idle,
 )
