@@ -13,35 +13,6 @@ class RoomAvailabilityViewModel(
 
 ) : MainViewModel() {
 
-    /*private val _state = MutableStateFlow(RoomAvailabilityState())
-    val state = _state.asStateFlow()
-
-
-    private suspend inline fun <T> wrapWithLoadingState(
-        crossinline successState: (T) -> Unit,
-        crossinline errorState: (String) -> Unit,
-        crossinline block: suspend () -> T
-    ) {
-
-        viewModelScope.launch {
-
-            _state.update { it.copy(screenState = ScreenState.Loading) }
-
-            try {
-                val result = block()
-                successState(result)
-            } catch (e: Exception) {
-                errorState(e.localizedMessage ?: "An unknown error occurred")
-
-                Log.e("Error", e.printStackTrace().toString())
-            }
-
-        }
-
-
-    }*/
-
-
     fun fetchReservations(floor: String, selectedRoom: String, selectedDate: LocalDate) {
         viewModelScope.launch {
             val reservations = loadReservationsForRoom(selectedRoom, selectedDate)
@@ -56,7 +27,7 @@ class RoomAvailabilityViewModel(
         }
     }
 
-    // Simulate loading reservations with proper epoch time for startTime and endTime
+
     private fun loadReservationsForRoom(room: String, date: LocalDate): List<Reservation> {
         return listOf(
             Reservation(

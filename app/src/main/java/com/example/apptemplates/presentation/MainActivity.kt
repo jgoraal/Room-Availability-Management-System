@@ -36,13 +36,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppTemplatesTheme {
                 val navController = rememberNavController()
-                val authViewModel = AuthViewModel()
-                val isUserAuthenticated by authViewModel.isUserAuthenticated.collectAsState()
 
-                RootNavGraph(
-                    navController = navController,
-                    isUserAuthenticated = isUserAuthenticated
-                )
+                RootNavGraph(navController = navController)
             }
         }
     }

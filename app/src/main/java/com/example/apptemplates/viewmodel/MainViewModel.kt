@@ -23,10 +23,10 @@ abstract class MainViewModel() : ViewModel() {
     val eventFlow: SharedFlow<UiEvent> = _eventFlow.asSharedFlow()
 
 
-    protected inline fun <T> wrapWithLoadingState(
-        crossinline successState: (T) -> Unit,
-        crossinline errorState: (String) -> Unit,
-        crossinline block: suspend () -> T
+    protected  fun <T> wrapWithLoadingState(
+         successState: (T) -> Unit,
+         errorState: (String) -> Unit,
+         block: suspend () -> T
     ) {
         viewModelScope.launch {
             _state.update { it.copy(screenState = ScreenState.Loading) }

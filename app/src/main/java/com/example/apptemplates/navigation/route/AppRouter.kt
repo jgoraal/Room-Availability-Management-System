@@ -47,6 +47,9 @@ sealed class AppScreen(
     val icon: ImageVector? = null,
     val label: String? = null
 ) {
+
+    data object Loading : AppScreen("loading")
+
     data object Auth : AppScreen("auth") {
         data object LoginMenu : AppScreen("login_menu")
         data object SignIn : AppScreen("sign_in")

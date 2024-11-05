@@ -10,6 +10,7 @@ import com.example.apptemplates.firebase.database.FirestoreRepository
 import com.example.apptemplates.firebase.database.result.FirestoreResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,8 +18,8 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
 
-    private val state = MutableStateFlow(false)
-    val isUserAuthenticated: StateFlow<Boolean> = state.asStateFlow()
+    private val state = MutableStateFlow<Boolean?>(null)
+    val isUserAuthenticated: StateFlow<Boolean?> = state.asStateFlow()
 
     init {
         checkUserAuthentication()
@@ -27,10 +28,14 @@ class AuthViewModel : ViewModel() {
     /**
      * Checks if a user is already authenticated in FirebaseAuth.
      */
-    private fun checkUserAuthentication() = viewModelScope.launch {
-        val firebaseUser = FirebaseAuthManager.currentUser
-        firebaseUser?.let { setUserAuthenticated(it) } ?: updateState(false)
+    private fun checkUserAuthentication() {
+        viewModelScope.launch(SupervisorJob()) {
+            val firebaseUser = FirebaseAuthManager.currentUser
+            Log.e("AuthViewModel", "checkUserAuthentication: ${firebaseUser?.uid}")
+            firebaseUser?.let { setUserAuthenticated(it) } ?: updateState(false)
+        }
     }
+
 
     /**
      * Fetches and sets the authenticated user details from Firestore.
@@ -82,7 +87,7 @@ class AuthViewModel : ViewModel() {
     /**
      * Updates the authentication state.
      */
-    private fun updateState(isAuthenticated: Boolean) {
+    private fun updateState(isAuthenticated: Boolean?) {
         state.value = isAuthenticated
     }
 }
