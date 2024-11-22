@@ -10,8 +10,9 @@ data class User(
     val email: String = "",
     val lastSeen: Long = 0L,
     val created: String = UserCreatedDate.getInstance().getFormattedCreatedDate(),
-    val isVerified: Boolean = false,
-    val role: Role = Role.GUEST
+    val verified: Boolean = false,
+    val role: Role = Role.GUEST,
+    val profileImageUrl: String = ""
 )
 
 
@@ -30,20 +31,6 @@ class UserCreatedDate {
         return dateFormat.format(Date(createdDate))
     }
 
-    // Ustawia datę ręcznie (timestamp w milisekundach)
-    fun setCreatedDate(date: Long) {
-        createdDate = date
-    }
-
-    // Resetuje datę na bieżący czas
-    fun resetCreatedDate() {
-        createdDate = System.currentTimeMillis()
-    }
-
-    // Pobiera datę w formie timestampu
-    fun getCreatedDate(): Long {
-        return createdDate
-    }
 
     companion object {
         private var instance: UserCreatedDate? = null

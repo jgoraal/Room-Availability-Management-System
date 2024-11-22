@@ -9,10 +9,12 @@ object RoomRepositoryImpl : RoomRepository {
     override val database: FirebaseFirestore
         get() = FirebaseFirestore.getInstance()
 
-    override suspend fun fetchRooms(): Result<List<Room>> {
+    override suspend fun fetchRooms(roomIds: Set<String>): Result<List<Room>> {
         return try {
-            val snapshot = database.collection("rooms").get().await()
+            val snapshot = database.collection("rooms")
+                .get().await()
             val rooms = snapshot.toObjects(Room::class.java)
+                .filter { it.id in roomIds }
             Result.SuccessWithResult(rooms)
         } catch (e: Exception) {
             Result.Error(e.message ?: "Unknown error")
@@ -87,6 +89,32 @@ object RoomRepositoryImpl : RoomRepository {
         } catch (e: Exception) {
             Result.Error(e.message ?: "Unknown error")
         }
+    }
+
+    suspend fun fetchRoomsByFloor(floor: Int?): Result<List<Room>> {
+        return try {
+
+            val snapshot = database
+                .collection("rooms")
+
+
+            val rooms = if (floor != null) {
+                snapshot.whereEqualTo("floor", floor).get().await()
+            } else {
+                snapshot.get().await()
+            }
+
+
+            val availableRooms = rooms.toObjects(Room::class.java)
+                .sortedWith(compareBy<Room> { it.floor }.thenBy {
+                    it.name.filter { char -> char.isDigit() }.toIntOrNull() ?: Int.MAX_VALUE
+                })
+
+            Result.SuccessWithResult(availableRooms)
+        } catch (e: Exception) {
+            Result.Error(e.message ?: "Unknown error")
+        }
+
     }
 
 }

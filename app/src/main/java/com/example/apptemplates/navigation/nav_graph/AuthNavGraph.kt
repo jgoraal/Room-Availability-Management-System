@@ -3,9 +3,6 @@ package com.example.apptemplates.navigation.nav_graph
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -15,7 +12,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.example.apptemplates.navigation.route.AppScreen
-import com.example.apptemplates.presentation.login.login_menu.AuthViewModel
 import com.example.apptemplates.presentation.login.login_menu.LoginMenuScreen
 import com.example.apptemplates.presentation.login.password_reset.PasswordResetScreen
 import com.example.apptemplates.presentation.login.password_reset.ResetPasswordViewModel
@@ -108,7 +104,7 @@ private fun NavGraphBuilder.signUpComposable(navController: NavController) {
 private fun NavGraphBuilder.signUpConfirmComposable(navController: NavController) {
     composable(route = AppScreen.Auth.SignUpConfirm.route) {
         val signUpConfirmViewModel: SignUpConfirmViewModel =
-            viewModel(navController.getBackStackEntry(AppScreen.Auth.route))
+            viewModel(/*navController.getBackStackEntry(AppScreen.Auth.route)*/)
         SignUpConfirmScreen(
             viewModel = signUpConfirmViewModel,
             onNavigateBack = { navController.navigateUp() },

@@ -1,8 +1,8 @@
 package com.example.apptemplates.form
 
 data class FormState(
-    val username: String = "jgoraal",
-    val email: String = "jakubgorskki@gmail.com",
+    val username: String = "",
+    val email: String = "",
     val password: String = "@Test1234",
     val confirmPassword: String = "@Test1234",
     val attempts: Int = 0,

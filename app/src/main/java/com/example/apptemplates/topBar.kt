@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.apptemplates.core.Constants
 import com.example.apptemplates.navigation.route.AppScreen
 import com.example.apptemplates.presentation.login.sign_in.component.getThemeTopAppBarColors
 import com.example.apptemplates.ui.theme.AppTextStyles.topBarSubtitleStyle
@@ -65,7 +66,7 @@ fun TopBarPreview(
             ) {
 
                 Text(
-                    text = "Roomy",
+                    text = Constants.TAG,
                     style = topBarTitleStyle(themeColors.textColor)
                 )
 

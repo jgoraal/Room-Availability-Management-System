@@ -2,11 +2,10 @@ package com.example.apptemplates.data.user.permission
 
 sealed class UserRole(val permissions: List<Permission>) {
 
-    // Default role
+    // Guest role
     data object Guest : UserRole(
         listOf(
-            Permission.CannotReserve,
-            Permission.CanSeeRoomAvailability
+            Permission.CannotReserve, // Done
         )
     )
 
@@ -15,38 +14,38 @@ sealed class UserRole(val permissions: List<Permission>) {
     data object Student : UserRole(
         listOf(
             Permission.CanReserveRoom(
-                maxReservationCount = 1,
+                maxReservationCount = 2,
                 allowedReservationTypes = listOf(
                     ReservationType.STANDARD,
-                    ReservationType.PROVISIONAL
                 )
-            ),
-            Permission.MaxReservationTime(1),
+            ), // Done
+            Permission.MaxReservationTime(1), // 1 Unit stands for 1 hour 30 min = 90 min Done
             Permission.CanCancelReservation,
             Permission.CanSeeRoomAvailability,
-            Permission.MaxAdvanceBookingPeriod(14), // 2 weeks advance booking
-            Permission.RequiresAdminApproval
+            Permission.MaxAdvanceBookingPeriod(28), // 2 weeks advance booking
+            Permission.MaxAttendeeCount(20),
+            Permission.RequiresAdminApproval // Done
         )
     )
 
+    // Employee role
     data object Employee : UserRole(
         listOf(
             Permission.CanReserveRoom(
-                maxReservationCount = 3,
+                maxReservationCount = 5,
                 allowedReservationTypes = listOf(
                     ReservationType.STANDARD,
                     ReservationType.RECURRING,
-                    ReservationType.URGENT
                 )
             ),
             Permission.MaxReservationTime(2),
-            Permission.CanApproveReservation,
-            Permission.CanReserveImmediately,
+            Permission.CanMakeRecurringReservation, // Done
+            Permission.CanReserveImmediately, // Done
             Permission.CanCancelReservation,
-            Permission.CanViewAllReservations,
             Permission.CanRequestAdditionalEquipment,
             Permission.CanSeeRoomAvailability,
-            Permission.MaxAdvanceBookingPeriod(30) // 1 month advance booking
+            Permission.MaxAttendeeCount(150),
+            Permission.MaxAdvanceBookingPeriod(56) // 2 month advance booking
         )
     )
 
@@ -54,11 +53,8 @@ sealed class UserRole(val permissions: List<Permission>) {
     // Admin role
     data object Admin : UserRole(
         listOf(
-            Permission.CanApproveReservation
+            Permission.CanApproveReservation,
         )
     )
 }
 
-fun UserRole.hasPermission(permission: Permission): Boolean {
-    return permissions.contains(permission)
-}

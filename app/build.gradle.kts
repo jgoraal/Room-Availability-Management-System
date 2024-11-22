@@ -77,6 +77,14 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.8.1")
 
+    implementation("io.coil-kt:coil-compose:2.1.0")
+
+    implementation("com.google.accompanist:accompanist-permissions:0.25.0")
+
+    implementation("com.google.firebase:firebase-storage-ktx:20.1.0")
+    implementation("com.google.firebase:firebase-firestore-ktx:24.5.0")
+
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -91,6 +99,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.material)
+    implementation(libs.firebase.storage)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

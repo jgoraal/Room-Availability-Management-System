@@ -1,6 +1,5 @@
 package com.example.apptemplates.presentation.main.temp
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -25,7 +24,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemColors
@@ -65,6 +63,7 @@ import com.example.apptemplates.data.reservation.RecurrenceFrequency
 import com.example.apptemplates.data.reservation.Reservation
 import com.example.apptemplates.data.room.EquipmentType
 import com.example.apptemplates.data.room.Room
+import com.example.apptemplates.data.user.ActiveUser
 import com.example.apptemplates.data.user.User
 import com.example.apptemplates.form.ScreenState
 import com.example.apptemplates.form.UiError
@@ -72,10 +71,13 @@ import com.example.apptemplates.montserratFontFamily
 import com.example.apptemplates.navigation.route.AppScreen
 import com.example.apptemplates.presentation.login.sign_in.component.CommonLoadingSnackbar
 import com.example.apptemplates.presentation.login.sign_in.component.getThemeTopAppBarColors
+import com.example.apptemplates.presentation.main.home.ActiveReservations
+import com.example.apptemplates.presentation.main.home.ActiveRooms
 import com.example.apptemplates.presentation.main.home.HomeView
 import com.example.apptemplates.presentation.main.home.HomeViewModel
 import com.example.apptemplates.presentation.main.profile.ProfileView
 import com.example.apptemplates.presentation.main.profile.ProfileViewModel
+import com.example.apptemplates.presentation.main.profile.domain.SignOutUseCase
 import com.example.apptemplates.presentation.main.reservation.ReservationView
 import com.example.apptemplates.presentation.main.reservation.ReservationViewModel
 import com.example.apptemplates.presentation.main.room_availability.RoomAvailabilityView
@@ -97,10 +99,6 @@ fun AppScaffold(
     val isRightDrawerOpen = remember { mutableStateOf(false) }
     val currentScreenState = remember { mutableStateOf(MainUiState()) }
     val theme = getThemeTopAppBarColors()
-
-    if (currentScreenState.value.screenState == ScreenState.Loading) {
-        Log.e("STATE", "Loading")
-    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -127,15 +125,30 @@ fun AppScaffold(
                 })
             },
             snackbarHost = {
-                CommonLoadingSnackbar(
-                    currentScreenState.value.screenState == ScreenState.Loading,
-                    theme
-                )
+
+                if (currentScreenState.value.screenState == ScreenState.Loading) {
+                    CommonLoadingSnackbar(
+                        currentScreenState.value.screenState == ScreenState.Loading,
+                        theme
+                    )
+                } else if (currentScreenState.value.screenState is ScreenState.Error) {
+                    CommonErrorSnackBar(
+                        currentScreenState.value.screenState is ScreenState.Error,
+                        currentScreenState.value.screenState,
+                        theme
+                    ) {}
+                }
+
+
             },
             content = { padding ->
-                MainContentNavGraph(navController, padding, onScreenStateChange = { state ->
-                    currentScreenState.value = state
-                })
+                MainContentNavGraph(
+                    navController,
+                    padding,
+                    onLogout,
+                    onScreenStateChange = { state ->
+                        currentScreenState.value = state
+                    })
             })
 
         if (isRightDrawerOpen.value) {
@@ -170,8 +183,17 @@ data class MainUiState(
     val errors: List<UiError> = emptyList(),
     val lastUpdated: LocalDateTime? = null,  // Track when data was last updated
     val isLoading: Boolean = false,
+    val reservationTimePeriods: TimePeriod = TimePeriod.TODAY,
+    val filteredReservations: List<Reservation> = emptyList(),
+    val reservationsLeft: Int? = null,
+    val maxReservations: Int? = null,
+    val lastReservationDate: String? = null,
+    val showReservationDetailsDialog: Boolean = false,
+    val selectedReservation: Reservation? = null,
+    val selectedAdditionalEquipment: MutableList<EquipmentType> = mutableListOf(),
 
     // RESERVATION
+    val reservationError: ReservationError? = null,
     val selectedDate: LocalDate? = null, // Data rozpoczecia i zakonczenia jezeli nie jest cykliczna
     val selectedTime: LocalTime? = null, // Godzina rozpoczecia
     val selectedEndTime: LocalTime? = null, // Godzina zakonczenia
@@ -182,25 +204,45 @@ data class MainUiState(
     val recurringFrequency: RecurrenceFrequency? = null, // Rodzaj cykliczonosci
     val endRecurrenceDate: LocalDate? = null,   // Zakonczenie cyklu
 
-    val selectedFloor: Int = 1, // Wybrany piętro
+    val selectedFloor: Int? = null, // Wybrany piętro
+    val floorName: String? = null,
     val selectedEquipment: List<EquipmentType> = emptyList(), // Wybrane conflictos
 
     val availableRooms: List<Room> = emptyList(),
 
+    val selectedRoomToReserve: Room? = null,
+
     // PROFILE
-    val username: String = "jgoraal",
-    val role: String = "Guest",
-    val email: String = "jakubgorskki@gmail.com",
-    val isEmailVerified: Boolean = true,
-    val overallReservationCount: Int = 2,
+    val username: String = ActiveUser.getUser()?.username ?: "Nieznajomy",
+    val role: String = ActiveUser.getUser()?.role.toString() ?: "Nieznajomy",
+    val email: String = ActiveUser.getUser()?.email ?: "nieznany",
+    val isEmailVerified: Boolean = ActiveUser.isUserVerified(),
+    val overallReservationCount: Int = ActiveReservations.getAllReservations().value.size,
     val lastSeen: Long = 1,
 
     //Availabilty
     val selectedFloorName: String = "Parter",
     val selectedRoomNumber: String = "",
+    val selectedFloorNumber: Int? = null,
     val selectedDateCheck: LocalDate = LocalDate.now(),
+    val selectedRoom: Room? = null,
+    val times: List<Triple<Long, Long, Boolean>>? = null,
+    val canSeeRoomAvailability: Boolean = false,
 
-    )
+
+    // All
+    val profileImageUrl: String = "",
+)
+
+enum class TimePeriod {
+    TODAY, TOMORROW, WEEK, MONTH, ALL
+}
+
+sealed class ReservationError {
+    data class TimeConflict(val message: String) : ReservationError()
+    data class AttendeesConflict(val message: String) : ReservationError()
+    data class RecurrenceConflict(val message: String) : ReservationError()
+}
 
 @Composable
 fun BottomBar(
@@ -301,14 +343,16 @@ private fun NavGraphBuilder.homeScreen(
 
         HomeView(
             padding = padding,
-            uiState = homeViewModel.state.collectAsState().value,
+            viewModel = homeViewModel,
+            uiState = state
         )
     }
 }
 
 private fun NavGraphBuilder.reservationScreen(
     padding: PaddingValues,
-    onScreenStateChange: (MainUiState) -> Unit
+    onScreenStateChange: (MainUiState) -> Unit,
+    navController: NavHostController
 ) {
     composable(AppScreen.Main.Reservation.route) { backStackEntry ->
         val reservationViewModel: ReservationViewModel = viewModel(backStackEntry)
@@ -320,7 +364,15 @@ private fun NavGraphBuilder.reservationScreen(
         ReservationView(
             state = reservationViewModel.state.collectAsState().value,
             viewModel = reservationViewModel,
-            modifier = Modifier.padding(padding)
+            padding = padding,
+            modifier = Modifier.padding(padding),
+            navigateOnSuccess = {
+                navController.navigate(AppScreen.Main.Home.route) {
+                    popUpTo(AppScreen.Main.route) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
         )
     }
 }
@@ -338,6 +390,7 @@ private fun NavGraphBuilder.roomAvailabilityScreen(
         RoomAvailabilityView(
             state = roomAvailabilityViewModel.state.collectAsState().value,
             viewModel = roomAvailabilityViewModel,
+            padding = padding,
             modifier = Modifier.padding(padding)
         )
     }
@@ -345,7 +398,8 @@ private fun NavGraphBuilder.roomAvailabilityScreen(
 
 private fun NavGraphBuilder.profileScreen(
     padding: PaddingValues,
-    onScreenStateChange: (MainUiState) -> Unit
+    onLogout: () -> Unit,
+    onScreenStateChange: (MainUiState) -> Unit,
 ) {
     composable(AppScreen.Main.Profile.route) { backStackEntry ->
         val profileViewModel: ProfileViewModel = viewModel(backStackEntry)
@@ -357,6 +411,9 @@ private fun NavGraphBuilder.profileScreen(
         ProfileView(
             state = profileViewModel.state.collectAsState().value,
             viewModel = profileViewModel,
+            onLogout = {
+                onLogout()
+            },
             padding = padding
         )
     }
@@ -373,6 +430,7 @@ private fun NavGraphBuilder.settingsScreen() {
 private fun MainContentNavGraph(
     navController: NavHostController,
     padding: PaddingValues,
+    onLogout: () -> Unit,
     onScreenStateChange: (MainUiState) -> Unit
 ) {
     NavHost(
@@ -381,9 +439,9 @@ private fun MainContentNavGraph(
     ) {
 
         homeScreen(padding, onScreenStateChange)
-        reservationScreen(padding, onScreenStateChange)
+        reservationScreen(padding, onScreenStateChange, navController)
         roomAvailabilityScreen(padding, onScreenStateChange)
-        profileScreen(padding, onScreenStateChange)
+        profileScreen(padding, onLogout, onScreenStateChange)
         settingsScreen()
     }
 }
@@ -432,14 +490,13 @@ private fun RightDrawerContent(
     }
 }
 
+
 @Composable
 fun CustomDrawerContent(
-    //navController: NavController,
-    activeScreen: String?, // Etykieta lub identyfikator aktywnego ekranu
+    activeScreen: String?,
     onScreenSelected: (String) -> Unit,
     onLogout: () -> Unit
 ) {
-
     val topItems = listOf(
         AppScreen.Main.Home,
         AppScreen.Main.RoomAvailability,
@@ -451,80 +508,100 @@ fun CustomDrawerContent(
         AppScreen.Main.Settings, AppScreen.Main.LogOut
     )
 
+    val backgroundGradient = if (isSystemInDarkTheme()) {
+        listOf(Color(0xFF2E3A48), Color(0xFF1C252F))
+    } else {
+        listOf(Color(0xFFFDF6EC), Color(0xFFECE3D3)) // Warm light beige for a soft appearance
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = if (isSystemInDarkTheme()) listOf(
-                        Color(0xFF2E3A48), Color(0xFF1C252F)
-                    ) else listOf(Color(0xFFF2F5F9), Color(0xFFCAD3DF))
-                )
-            )
+            .background(brush = Brush.verticalGradient(colors = backgroundGradient))
     ) {
-        // Nagłówek z obrazkiem
+        // Header with Image
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
-                .background(Color.Transparent)
-                .padding(16.dp), contentAlignment = Alignment.Center
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(id = R.drawable.app_logo), // Zmień na swój obrazek
+                painter = painterResource(id = R.drawable.app_logo), // Change to your image
                 contentDescription = "Header Image",
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
-                    .shadow(8.dp, CircleShape)
+                    .shadow(10.dp, CircleShape)
+                    .background(
+                        Color(0xFFF5EEDC),
+                        shape = CircleShape
+                    ) // Soft beige background for the logo
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Lista pozycji menu
+        // Menu items
         topItems.forEach { screen ->
-            DrawerItem(icon = screen.icon!!,
+            DrawerItem(
+                icon = screen.icon!!,
                 label = screen.label!!,
                 isSelected = activeScreen == screen.route,
-                onClick = { onScreenSelected(screen.route) })
+                onClick = { onScreenSelected(screen.route) }
+            )
         }
 
-        Spacer(modifier = Modifier.padding(vertical = 8.dp)) // Wypełnienie przestrzeni
+        Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
-        HorizontalDivider(color = Color.Gray.copy(alpha = 0.3f), thickness = 1.dp)
+        HorizontalDivider(color = Color(0xFFDADADA).copy(alpha = 0.5f), thickness = 1.dp)
 
         Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
         bottomItems.forEach { screen ->
-            DrawerItem(icon = screen.icon!!,
+            DrawerItem(
+                icon = screen.icon!!,
                 label = screen.label!!,
                 isSelected = activeScreen == screen.route,
                 onClick = {
-                    if (screen.route == AppScreen.Main.LogOut.route) onLogout()
-                    else onScreenSelected(screen.route)
+                    if (screen.route == AppScreen.Main.LogOut.route) {
+                        SignOutUseCase()()
+                        ActiveReservations.setReservations(emptyList())
+                        ActiveRooms.setRooms(emptyList())
+                        ActiveUser.clearUser()
+                        onLogout()
+                    } else onScreenSelected(screen.route)
                 }
             )
         }
-
     }
 }
 
 @Composable
 fun DrawerItem(
-    icon: ImageVector, label: String, isSelected: Boolean, onClick: () -> Unit
+    icon: ImageVector,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
 ) {
-    val backgroundColor =
-        if (isSelected) Color(0xFFD32F2F).copy(alpha = 0.15f) else Color.Transparent
-    val textColor =
-        if (isSelected) Color(0xFFD32F2F) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
 
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .background(backgroundColor, RoundedCornerShape(12.dp))
-        .clickable { onClick() }
-        .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically) {
+    val backgroundColor =
+        if (isSelected) Color(0xFFE0A800).copy(alpha = 0.3f) else Color.Transparent // Złoty odcień dla zaznaczonego tła
+    val textColor =
+        if (isSelected) Color(0xFF3D1F1F) else Color(0xFF5D4037) // Ciemny brąz dla zaznaczonego tekstu
+
+
+
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
@@ -533,9 +610,13 @@ fun DrawerItem(
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
-            text = label, color = textColor, fontWeight = FontWeight.Medium, fontSize = 16.sp
+            text = label,
+            color = textColor,
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.sp
         )
     }
 }
+
 
 

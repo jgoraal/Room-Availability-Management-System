@@ -1,9 +1,9 @@
 package com.example.apptemplates.navigation.route
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -60,9 +60,11 @@ sealed class AppScreen(
 
     data object Main : AppScreen(MAIN) {
         data object Home : AppScreen(HOME, Icons.Default.Home, "Strona Główna")
-        data object Reservation : AppScreen(RESERVATION, Icons.Default.Bookmarks, "Rezerwacje")
+        data object Reservation :
+            AppScreen(RESERVATION, Icons.AutoMirrored.Filled.Assignment, "Rezerwacje")
+
         data object RoomAvailability :
-            AppScreen(ROOM_AVAILABILITY, Icons.Default.CalendarMonth, "Terminarz")
+            AppScreen(ROOM_AVAILABILITY, Icons.Default.CalendarMonth, "Dostępność")
 
         data object Profile : AppScreen(PROFILE, Icons.Default.AccountCircle, "Profil")
         data object Settings : AppScreen(SETTINGS, Icons.Default.Settings, "Ustawienia")

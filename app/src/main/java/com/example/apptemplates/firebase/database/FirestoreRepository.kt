@@ -1,6 +1,7 @@
 package com.example.apptemplates.firebase.database
 
 import android.util.Log
+import com.example.apptemplates.data.user.ActiveUser
 import com.example.apptemplates.data.user.User
 import com.example.apptemplates.firebase.database.result.FirestoreResult
 import com.google.firebase.firestore.FirebaseFirestore
@@ -99,10 +100,26 @@ object FirestoreRepository : FirestoreService {
         }
     }
 
-    override suspend fun deleteUser(email: String): FirestoreResult {
+    suspend fun updateVerifiedStatus(): FirestoreResult {
+        return try {
+
+            usersCollection.document(
+                ActiveUser.getUid() ?: throw Exception("Nie ma takiego użytkownika!")
+            ).update("verified", true).await()
+
+            FirestoreResult.Success
+
+        } catch (e: Exception) {
+            FirestoreResult.Failure(e)
+        }
+
+    }
+
+
+    override suspend fun deleteUser(userId: String): FirestoreResult {
         return try {
             // Znajdź dokument użytkownika za pomocą zapytania na podstawie pola "email"
-            val querySnapshot = usersCollection.whereEqualTo("email", email).get().await()
+            val querySnapshot = usersCollection.whereEqualTo("uid", userId).get().await()
             if (!querySnapshot.isEmpty) {
                 for (document in querySnapshot.documents) {
                     document.reference.delete().await()
@@ -114,6 +131,22 @@ object FirestoreRepository : FirestoreService {
         } catch (e: Exception) {
             FirestoreResult.Failure(e)
         }
+    }
+
+
+    suspend fun updateProfileImage(downloadUrl: String): FirestoreResult {
+        return try {
+
+            usersCollection.document(
+                ActiveUser.getUid() ?: throw Exception("Nie ma takiego użytkownika!")
+            ).update("profileImageUrl", downloadUrl).await()
+
+            FirestoreResult.Success
+
+        } catch (e: Exception) {
+            FirestoreResult.Failure(e)
+        }
+
     }
 
 

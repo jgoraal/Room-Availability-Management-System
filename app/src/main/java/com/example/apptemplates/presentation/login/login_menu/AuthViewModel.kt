@@ -47,8 +47,8 @@ class AuthViewModel : ViewModel() {
         }
 
         val isEmailVerified = firebaseUser.isEmailVerified
-        if (isEmailVerified && !user.isVerified) {
-            val updatedUser = user.copy(isVerified = true)
+        if (isEmailVerified && !user.verified) {
+            val updatedUser = user.copy(verified = true)
             val updateResult = FirestoreRepository.updateUser(updatedUser)
             if (updateResult is FirestoreResult.Success) {
                 ActiveUser.setUser(updatedUser)
@@ -56,7 +56,7 @@ class AuthViewModel : ViewModel() {
             }
         }
 
-        ActiveUser.setUser(user.copy(isVerified = isEmailVerified))
+        ActiveUser.setUser(user.copy(verified = isEmailVerified))
         updateState(isEmailVerified)
     }
 

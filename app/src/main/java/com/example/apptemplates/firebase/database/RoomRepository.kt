@@ -7,7 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 interface RoomRepository {
     val database: FirebaseFirestore
 
-    suspend fun fetchRooms(): Result<List<Room>>
+    suspend fun fetchRooms(roomIds: Set<String>): Result<List<Room>>
     suspend fun addRoom(room: Room): Result<Void>
     suspend fun updateRoom(room: Room): Result<Void>
     suspend fun deleteRoom(roomId: String): Result<Void>

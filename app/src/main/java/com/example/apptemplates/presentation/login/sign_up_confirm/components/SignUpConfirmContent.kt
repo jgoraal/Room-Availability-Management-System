@@ -155,6 +155,7 @@ fun SignUpConfirm(
                 CommonConfirmUserRegistrationDialog(
                     state = state,
                     onConfirm = {
+                        showDialog = false
                         focusManager.clearFocus()
                         viewModel.authenticate()
                     },

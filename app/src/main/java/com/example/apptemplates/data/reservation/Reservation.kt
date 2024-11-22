@@ -1,5 +1,6 @@
 package com.example.apptemplates.data.reservation
 
+import com.example.apptemplates.data.room.Equipment
 import java.time.DayOfWeek
 import java.time.Instant
 import java.util.UUID
@@ -17,6 +18,7 @@ data class Reservation(
 
     val participants: Int? = null,
     val status: ReservationStatus = ReservationStatus.PENDING,
+    val additionalEquipment: List<Equipment> = emptyList(),
 
     val isRecurring: Boolean = false,
     val recurrencePattern: RecurrencePattern? = null
@@ -27,8 +29,6 @@ data class Reservation(
 enum class ReservationStatus {
     PENDING,    // Oczekująca na zatwierdzenie
     CONFIRMED,  // Potwierdzona
-    IN_PROGRESS,  // W trakcie
-    COMPLETED,  // Zakończona
     CANCELED  // Anulowana
 }
 

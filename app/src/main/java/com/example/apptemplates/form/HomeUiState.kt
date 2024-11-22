@@ -22,7 +22,8 @@ sealed class ScreenState {
     data object Loading : ScreenState()  // Loading state when data is being fetched
 
     data object Success : ScreenState()  // Success state with optional message
-    data class Error(val uiError: UiError) : ScreenState()  // Error state with detailed error message
+    data class Error(val uiError: UiError) :
+        ScreenState()  // Error state with detailed error message
 }
 
 
@@ -32,4 +33,5 @@ sealed class UiError {
     data class DatabaseError(val message: String, val throwable: Throwable? = null) : UiError()
     data class ValidationError(val field: String, val message: String) : UiError()
     data class UnknownError(val message: String, val throwable: Throwable? = null) : UiError()
+    data class PermissionError(val message: String) : UiError()
 }

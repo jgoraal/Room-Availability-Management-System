@@ -18,8 +18,8 @@ object ActiveUser {
     }
 
     // Check if a user is currently set
-    fun isUserLoggedIn(): Boolean {
-        return _userState.value?.isVerified ?: false
+    fun isUserVerified(): Boolean {
+        return _userState.value?.verified ?: false
     }
 
     // Get the UID of the current user
@@ -50,7 +50,11 @@ object ActiveUser {
 
     // Update the verification status of the current user
     fun updateIsVerified(isVerified: Boolean) {
-        _userState.value = _userState.value?.copy(isVerified = isVerified)
+        _userState.value = _userState.value?.copy(verified = isVerified)
+    }
+
+    fun updateProfileImageUrl(newUrl: String) {
+        _userState.value = _userState.value?.copy(profileImageUrl = newUrl)
     }
 
 

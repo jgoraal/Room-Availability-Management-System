@@ -5,11 +5,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TimePickerState
 import androidx.lifecycle.viewModelScope
 import com.example.apptemplates.data.reservation.RecurrenceFrequency
+import com.example.apptemplates.data.reservation.RecurrencePattern
 import com.example.apptemplates.data.reservation.Reservation
+import com.example.apptemplates.data.reservation.ReservationStatus
 import com.example.apptemplates.data.room.EquipmentType
 import com.example.apptemplates.data.room.Room
+import com.example.apptemplates.data.user.ActiveUser
 import com.example.apptemplates.form.ScreenState
 import com.example.apptemplates.form.UiError
+import com.example.apptemplates.presentation.main.home.ActiveReservations
+import com.example.apptemplates.presentation.main.home.ActiveRooms
 import com.example.apptemplates.presentation.main.home.domain.AddRoomUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.AddLessonUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.AddReservationUseCase
@@ -17,13 +22,14 @@ import com.example.apptemplates.presentation.main.reservation.domain.FetchAvaila
 import com.example.apptemplates.presentation.main.reservation.domain.FetchLessonsUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.FetchRecurringReservationsUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.FetchStandardReservationsUseCase
-import com.example.apptemplates.presentation.main.reservation.generator.generateTestRecurringReservation
-import com.example.apptemplates.presentation.main.reservation.generator.generateTestReservation
+import com.example.apptemplates.presentation.main.temp.ReservationError
 import com.example.apptemplates.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 class ReservationViewModel(
@@ -54,15 +60,27 @@ class ReservationViewModel(
 
     fun findRooms() {
 
+        if (!canUserMakeReservation()) {
+
+            handleError(UiError.PermissionError("Przekroczono limit rezerwacji"))
+            return
+
+        }
+
         viewModelScope.launch {
             wrapWithLoadingState(
                 successState = { rooms ->
                     _state.update {
                         it.copy(
-                            screenState = ScreenState.Success,
+                            screenState = if (rooms.isNotEmpty()) ScreenState.Success else ScreenState.Idle,
                             availableRooms = rooms
                         )
                     }
+
+                    if (rooms.isEmpty()) {
+                        handleError(UiError.DatabaseError("Brak dostępnych sal!"))
+                    }
+
                 },
                 errorState = { message ->
                     _state.update {
@@ -70,9 +88,8 @@ class ReservationViewModel(
                     }
                 },
                 {
-                    val isRecurring = listOf(true, false).random()
-                    val newReservation =
-                        if (isRecurring) generateTestReservation() else generateTestRecurringReservation()
+
+                    val newReservation = createNewReservation()
 
                     val combinedRoomIds = fetchCombinedRoomIds(newReservation)
 
@@ -80,7 +97,7 @@ class ReservationViewModel(
 
                     val allConflictingRoomIds = combinedRoomIds + overlappingLessonsRoomIds
 
-                    val availableRooms = fetchRooms(allConflictingRoomIds)
+                    val availableRooms = fetchAvailableRooms(allConflictingRoomIds)
 
                     logRoomResults(availableRooms, combinedRoomIds, overlappingLessonsRoomIds)
 
@@ -88,6 +105,18 @@ class ReservationViewModel(
                 }
             )
         }
+    }
+
+    private fun canUserMakeReservation(): Boolean {
+        return permission.canReserve(_state.value.isRecurring)
+    }
+
+    fun checkMaxReservationTime(minutesBetween: Long): Boolean {
+        return permission.hasExceededMaxReservationTime(minutesBetween.toInt())
+    }
+
+    fun canUserMakeRecurringReservation(): Boolean {
+        return permission.canMakeRecurringReservation()
     }
 
 
@@ -107,13 +136,43 @@ class ReservationViewModel(
         return fetchLessons(roomIds.toList(), newReservation).toSet()
     }
 
-    // Fetch available rooms by excluding conflicting ones
-    private suspend fun fetchRooms(excludedRoomIds: Set<String>): List<Room> {
-        return fetchRooms(excludedRoomIds.toList()).filter { room ->
-            room.capacity >= _state.value.selectedAttendees && // Ensure room has enough capacity
-                    room.floor == _state.value.selectedFloor && // Filter by selected floor
-                    room.equipment.all { it.type in _state.value.selectedEquipment } // Filter rooms with selected equipment
+    // Fetch available rooms by excluding conflicting ones and applying filters
+    private suspend fun fetchAvailableRooms(excludedRoomIds: Set<String>): List<Room> {
+        val selectedFloor = _state.value.selectedFloor
+        val selectedAttendees = _state.value.selectedAttendees
+        val selectedEquipment = _state.value.selectedEquipment.toSet()
+
+        // Fetch initial room list based on excluded rooms
+        val rooms = fetchRooms(excludedRoomIds.toList())
+
+        Log.i("ROOMS", "Available rooms before filtering ${rooms.size}")
+
+        ActiveRooms.addRooms(rooms)
+
+        // Apply filters for capacity, floor, and equipment
+        return rooms.filter { room ->
+            meetsCapacityRequirements(room, selectedAttendees) &&
+                    meetsFloorRequirement(room, selectedFloor) &&
+                    meetsEquipmentRequirements(room, selectedEquipment)
         }
+    }
+
+    // Helper function to check room capacity
+    private fun meetsCapacityRequirements(room: Room, requiredCapacity: Int): Boolean {
+        return room.capacity >= requiredCapacity
+    }
+
+    // Helper function to check if room matches the selected floor
+    private fun meetsFloorRequirement(room: Room, selectedFloor: Int?): Boolean {
+        return selectedFloor == null || room.floor == selectedFloor
+    }
+
+    // Helper function to check if room has all required equipment
+    private fun meetsEquipmentRequirements(
+        room: Room,
+        selectedEquipment: Set<EquipmentType>
+    ): Boolean {
+        return selectedEquipment.isEmpty() || selectedEquipment.any { it in room.equipment.map { e -> e.type } }
     }
 
 
@@ -126,6 +185,65 @@ class ReservationViewModel(
         Log.i("ROOMS", "Combined room IDs (reservations): ${combinedRoomIds.size}")
         Log.i("ROOMS", "Overlapping lessons room IDs: ${lessonsRoomIds.size}")
         Log.i("ROOMS", "Available rooms: ${availableRooms.size}")
+    }
+
+    private fun createNewReservation(): Reservation {
+        return Reservation(
+            userId = ActiveUser.getUser()!!.uid,
+            createdAt = LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
+            startTime = LocalDateTime.of(_state.value.selectedDate!!, _state.value.selectedTime!!)
+                .toInstant(ZoneOffset.UTC).toEpochMilli(),
+            endTime = LocalDateTime.of(_state.value.selectedDate!!, _state.value.selectedEndTime!!)
+                .toInstant(ZoneOffset.UTC).toEpochMilli(),
+            dayOfWeek = _state.value.selectedDate!!.dayOfWeek,
+            participants = _state.value.selectedAttendees,
+            isRecurring = _state.value.isRecurring,
+            recurrencePattern = if (_state.value.isRecurring) RecurrencePattern(
+                frequency = _state.value.recurringFrequency ?: RecurrenceFrequency.WEEKLY,
+                endDate = _state.value.endRecurrenceDate!!.atStartOfDay().toInstant(ZoneOffset.UTC)
+                    .toEpochMilli()
+            ) else null,
+        )
+
+    }
+
+
+    fun confirmReservation(navigateOnSuccess: () -> Unit) {
+
+        if (!canUserMakeReservation()) {
+            handleError(UiError.PermissionError("Przekroczono limit rezerwacji"))
+            return
+        }
+
+
+        wrapWithLoadingState(
+            successState = {
+                _state.update {
+                    it.copy(
+                        screenState = ScreenState.Success,
+                    )
+                }
+
+                navigateOnSuccess()
+            },
+            errorState = { message ->
+                _state.update {
+                    it.copy(screenState = ScreenState.Error(UiError.DatabaseError(message)))
+                }
+            },
+            {
+                val newReservation = createNewReservation().copy(
+                    roomId = _state.value.selectedRoomToReserve!!.id,
+                    status = if (permission.requiresAdminApproval()) ReservationStatus.PENDING else ReservationStatus.CONFIRMED
+                )
+
+                ActiveReservations.addReservation(newReservation)
+
+                addReservation(newReservation)
+            }
+        )
+
+
     }
 
 
@@ -142,6 +260,12 @@ class ReservationViewModel(
     }
 
     fun changeAttendees(attendees: Int) {
+
+        if (!permission.checkMaxAttendeeCount(attendees)) {
+            handleError(UiError.PermissionError("Przekroczono limit uczestników"))
+            return
+        }
+
         _state.value = _state.value.copy(selectedAttendees = attendees)
     }
 
@@ -163,12 +287,28 @@ class ReservationViewModel(
         }
     }
 
+    fun changeEndDate(date: LocalDate) {
+        _state.update { it.copy(endRecurrenceDate = date) }
+    }
+
     fun updateSelectedEquipment(updatedEquipment: List<EquipmentType>) {
         _state.update { it.copy(selectedEquipment = updatedEquipment) }
     }
 
-    fun updateSelectedFloor(selectedFloor: Int) {
+    fun updateSelectedFloor(selectedFloor: Int?) {
         _state.update { it.copy(selectedFloor = selectedFloor) }
+    }
+
+    fun errorState(error: ReservationError?) {
+        _state.update { it.copy(reservationError = error) }
+    }
+
+    fun changeSelectedRoom(room: Room?) {
+        _state.update { it.copy(selectedRoomToReserve = room) }
+    }
+
+    fun getMaximumAttendees(): Int {
+        return permission.getMaximumAttendees()
     }
 
 }

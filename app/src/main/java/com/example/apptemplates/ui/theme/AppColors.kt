@@ -1,5 +1,8 @@
 package com.example.apptemplates.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.example.apptemplates.utils.colorShift
 
@@ -43,4 +46,46 @@ object AppColors {
     //==============================================================================================
 
 
+    //==============================================================================================
+    val contentBackgroundGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFFFDEDD4),
+            Color(0xFFFCE5D1),  // Light warm sand, soft and gentle at the top
+            Color(0xFFD8CAB8),  // Muted beige-gray in the middle
+            Color(0xFFA8B9A4),  // Soft sage green toward the bottom
+            Color(0xFFFCE5D1),   // Light warm sand again for consistency
+            Color(0xFFFDEDD4),
+        )
+    )
+
+    val lightContentBackgroundGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFFFDEDD4),
+            Color(0xFFFCE5D1),
+            Color(0xFFD8CAB8),
+            Color(0xFFA8B9A4),
+            Color(0xFFFCE5D1),
+            Color(0xFFFDEDD4),
+        )
+    )
+
+
+    val darkContentBackgroundGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF2C3E50),
+            Color(0xFF34495E),
+            Color(0xFF4B79A1),
+            Color(0xFF16A085),
+            Color(0xFF2C3E50),
+        )
+    )
+    //==============================================================================================
+
+
+}
+
+
+@Composable
+fun getContentBackGround(): Brush {
+    return if (isSystemInDarkTheme()) AppColors.darkContentBackgroundGradient else AppColors.lightContentBackgroundGradient
 }

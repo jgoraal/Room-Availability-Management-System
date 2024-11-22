@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import com.example.apptemplates.data.user.ActiveUser
 import com.example.apptemplates.form.FormKey
 import com.example.apptemplates.form.UIState
 import com.example.apptemplates.navigation.event.NavigationEvent
@@ -56,7 +57,11 @@ fun SignIn(
         when (navigationEvent) {
 
             is NavigationEvent.NavigateOnSuccess -> {
-                Toast.makeText(context, "Witaj ponownie ${state.username}", Toast.LENGTH_LONG)
+                Toast.makeText(
+                    context,
+                    "Witaj ponownie ${ActiveUser.getUser()?.username ?: ""}",
+                    Toast.LENGTH_LONG
+                )
                     .show()
                 navigateToHome()
                 viewModel.resetNavigation() // Reset after handling navigation
