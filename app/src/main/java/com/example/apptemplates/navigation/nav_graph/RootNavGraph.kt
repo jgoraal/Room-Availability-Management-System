@@ -1,5 +1,6 @@
 package com.example.apptemplates.navigation.nav_graph
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -24,15 +25,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -87,53 +88,70 @@ fun LoadingScreen(navController: NavController) {
 
     val colors = MaterialTheme.colorScheme
 
+    // Kolory gradientu - możesz dostosować je wg własnego uznania.
+    val darkGradient = listOf(Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364))
+    val lightGradient = listOf(Color(0xFFFF9A9E), Color(0xFFFFD1C1), Color(0xFFFFE79A))
 
-    val gradientColors = if (isSystemInDarkTheme()) {
-        // Kolory dla ciemnego motywu
-        listOf(Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364))
-    } else {
-        // Kolory dla jasnego motywu - pomarańczowo-żółto-różowe
-        listOf(
-
-            Color(0xFFFF9A9E),
-            Color(0xFFFFD1C1),
-            Color(0xFFFFE79A)
-
-
-        )
-    }
-
-    // Animacja gradientu
-    val infiniteTransition = rememberInfiniteTransition(label = "")
-    val gradientOffset by infiniteTransition.animateFloat(
+    // Stany koloru tła - przełączamy pomiędzy pierwszym i drugim zestawem kolorów.
+    val isDarkTheme = isSystemInDarkTheme()
+    val currentGradient by rememberInfiniteTransition(label = "").animateFloat(
         initialValue = 0f,
-        targetValue = 1000f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            animation = tween(durationMillis = 6000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ), label = ""
     )
 
-    // Animacja kropek w tekście
-    val dotState = remember { mutableStateOf("") }
-    LaunchedEffect(Unit) {
-        val dots = listOf("", ".", "..", "...")
-        var index = 0
-        while (true) {
-            dotState.value = dots[index % dots.size]
-            index++
-            delay(500)
-        }
-    }
+    // Interpolacja kolorów gradientu
+    val startColor by animateColorAsState(
+        targetValue = if (isDarkTheme) {
+            // Gradient plynnie zmienia się między dwoma kolorami
+            Color.lerp(darkGradient[0], darkGradient[1], currentGradient)
+        } else {
+            Color.lerp(lightGradient[0], lightGradient[1], currentGradient)
+        },
+        animationSpec = tween(durationMillis = 1000)
+    )
+
+    val endColor by animateColorAsState(
+        targetValue = if (isDarkTheme) {
+            Color.lerp(darkGradient[1], darkGradient[2], currentGradient)
+        } else {
+            Color.lerp(lightGradient[1], lightGradient[2], currentGradient)
+        },
+        animationSpec = tween(durationMillis = 1000)
+    )
+
+    // Pulsacja tekstu
+    val infinitePulse = rememberInfiniteTransition(label = "")
+    val pulse by infinitePulse.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = ""
+    )
+
+    // Pulsacja ikony
+    val iconPulse by infinitePulse.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = ""
+    )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.linearGradient(
-                    colors = gradientColors,
-                    start = Offset(0f, gradientOffset),
-                    end = Offset(gradientOffset, 0f)
+                    colors = listOf(startColor, endColor),
+                    start = Offset(0f, 0f),
+                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
                 )
             ),
         contentAlignment = Alignment.Center
@@ -142,30 +160,49 @@ fun LoadingScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Opcjonalnie: Dodaj logo lub grafikę
+
             Icon(
                 painter = painterResource(id = R.drawable.app_logo),
                 contentDescription = null,
                 tint = colors.onBackground,
-                modifier = Modifier.size(100.dp)
+                modifier = Modifier
+                    .size(100.dp)
+                    .graphicsLayer {
+                        scaleX = iconPulse
+                        scaleY = iconPulse
+                    }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Tekst ładowania z animowanymi kropkami
             Text(
-                text = "Proszę czekać${dotState.value}",
+                text = "Proszę czekać...",
                 color = colors.onBackground,
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier
+                    .graphicsLayer {
+                        scaleX = pulse
+                        scaleY = pulse
+                    }
+                    .padding(bottom = 16.dp)
             )
 
-            // Dostosowany wskaźnik ładowania
+            // Nowoczesny wskaźnik ładowania z grubszą kreską, może bardziej subtelny kolor
             CircularProgressIndicator(
-                color = colors.onBackground,
+                color = colors.onBackground.copy(alpha = 0.8f),
                 strokeWidth = 6.dp,
                 modifier = Modifier.size(60.dp)
             )
         }
     }
+}
+
+// Funkcja do interpolacji kolorów
+private fun Color.Companion.lerp(start: Color, end: Color, fraction: Float): Color {
+    return Color(
+        red = lerp(start.red, end.red, fraction),
+        green = lerp(start.green, end.green, fraction),
+        blue = lerp(start.blue, end.blue, fraction),
+        alpha = lerp(start.alpha, end.alpha, fraction)
+    )
 }
