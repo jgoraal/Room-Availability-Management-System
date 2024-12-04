@@ -172,6 +172,39 @@ object DarkThemeReservationColors : ThemeReservationColors {
 }
 
 
+interface ThemeHeaderColors {
+    val backgroundGradient: List<Color>
+    val primaryTextColor: Color
+    val cardBackground: Color
+    val borderColor: Color
+    // Dodaj inne kolorki według uznania
+}
+
+object LightThemeHeaderColors : ThemeHeaderColors {
+    override val backgroundGradient = listOf(
+        Color(0xFFFDEDD4),
+        Color(0xFFD8CAB8),
+        Color(0xFFFDEDD4)
+    )
+    override val primaryTextColor = Color(0xFF4E342E)
+    override val cardBackground = Color(0xFFFFFFFF) // Biały lub inny jasny kolor
+    override val borderColor = Color(0xFFE0E0E0) // Jasnoszary dla obramowania
+    // Dodaj inne kolory według potrzeb
+}
+
+object DarkThemeHeaderColors : ThemeHeaderColors {
+    override val backgroundGradient = listOf(
+        Color(0xFF2C3E50),
+        Color(0xFF34495E),
+        Color(0xFF2C3E50)
+    )
+    override val primaryTextColor = Color(0xFFECF0F1)
+    override val cardBackground = Color(0xFF37474F) // Ciemny kolor dla karty
+    override val borderColor = Color(0xFF455A64) // Ciemniejszy szary dla obramowania
+    // Dodaj inne kolory według potrzeb
+}
+
+
 
 
 

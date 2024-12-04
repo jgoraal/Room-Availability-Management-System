@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -69,7 +70,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptemplates.presentation.main.reservation.components.CalendarView
 import com.example.apptemplates.presentation.main.reservation.components.getDaysInMonth
+import com.example.apptemplates.presentation.main.temp.DarkThemeHeaderColors
 import com.example.apptemplates.presentation.main.temp.DarkThemeTimeLineColors
+import com.example.apptemplates.presentation.main.temp.LightThemeHeaderColors
 import com.example.apptemplates.presentation.main.temp.LightThemeTimeLineColors
 import com.example.apptemplates.presentation.main.temp.MainUiState
 import com.example.apptemplates.presentation.main.temp.ThemeTimeLineColors
@@ -114,32 +117,7 @@ fun RoomAvailabilityView(
 
             // Header Title
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp)
-                        .background(
-                            Brush.horizontalGradient(
-                                colors = listOf(
-                                    Color(0xFFFDEDD4),
-                                    Color(0xFFD8CAB8),
-                                    Color(0xFFFDEDD4)
-                                )
-                            )
-                        )
-                        .padding(vertical = 8.dp, horizontal = 16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Sprawdź dostępność sali",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp,
-                            color = Color(0xFF4E342E)
-                        ),
-                        textAlign = TextAlign.Center
-                    )
-                }
+                AvailabilityHeader()
             }
 
 
@@ -185,6 +163,25 @@ fun RoomAvailabilityView(
                             )
 
                             floors.forEach { (floor, number) ->
+                                val isSelected = selectedFloor.value?.contains(floor) == true
+                                val isDarkTheme = isSystemInDarkTheme()
+
+                                // Definiowanie kolorów zależnie od motywu i stanu zaznaczenia
+                                val backgroundColor = if (isSelected) {
+                                    if (isDarkTheme) Color(0xFF3D5A80) else Color(0xFFFCE5D1)
+                                } else {
+                                    Color.Transparent
+                                }
+
+                                val textColor = if (isSelected) {
+                                    if (isDarkTheme) Color(0xFFFFFFFF) else Color(0xFF3E2723)
+                                } else {
+                                    if (isDarkTheme) Color(0xFFAEDFF7) else Color(0xFF3E2723)
+                                }
+
+                                val iconTint =
+                                    if (isDarkTheme) Color(0xFFFFFFFF) else Color(0xFF6D4C41)
+
                                 DropdownMenuItem(
                                     onClick = {
                                         viewModel.changeFloor(number)
@@ -198,32 +195,48 @@ fun RoomAvailabilityView(
                                         showRoomSelector.value = true
                                     },
                                     modifier = Modifier
-                                        //.background(Color(0xFFF1F8E9)) // Light neutral background
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        .then(
+                                            if (isSelected) {
+                                                Modifier
+                                                    .background(
+                                                        color = backgroundColor,
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    )
+                                                    .border(
+                                                        width = 1.dp,
+                                                        color = if (isDarkTheme) Color(0xFF98C1D9) else Color(
+                                                            0xFF8D6E63
+                                                        ),
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    )
+                                            } else {
+                                                Modifier
+                                            }
+                                        )
+                                        .padding(horizontal = 8.dp, vertical = 8.dp),
                                     text = {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween // Aligns the text and icon
+                                            horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
-                                            // Floor Name
+                                            // Nazwa piętra
                                             Text(
                                                 text = floor,
-                                                color = if (selectedFloor.value?.contains(floor) == true) Color(
-                                                    0xFF2E7D32
-                                                ) else Color(0xFF757575), // Green for selected, Gray for others
+                                                color = textColor,
                                                 style = MaterialTheme.typography.bodyMedium.copy(
                                                     fontWeight = FontWeight.Medium
                                                 )
                                             )
 
-                                            // Check Icon - Only show for selected floor
-                                            if (selectedFloor.value?.contains(floor) == true) {
+                                            // Ikona zaznaczenia
+                                            if (isSelected) {
                                                 Icon(
                                                     imageVector = Icons.Default.Check,
                                                     contentDescription = null,
-                                                    tint = Color(0xFF66BB6A), // Lighter green for check icon
+                                                    tint = iconTint,
                                                     modifier = Modifier.size(20.dp)
                                                 )
                                             }
@@ -443,6 +456,50 @@ private fun Int.getFloorName(): String {
 
 private fun String.getRoomName(): String {
     return "Sala " + this.split(" ").last()
+}
+
+@Composable
+fun AvailabilityHeader() {
+    val isDarkTheme = isSystemInDarkTheme()
+    val colors = if (isDarkTheme) DarkThemeHeaderColors else LightThemeHeaderColors
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, colors.borderColor),
+        colors = CardDefaults.cardColors(
+            containerColor = colors.cardBackground
+        ),
+        elevation = CardDefaults.cardElevation(8.dp),
+        modifier = Modifier
+            .padding(top = 16.dp)
+            .fillMaxWidth()
+            .padding(vertical = 12.dp, horizontal = 16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    Brush.horizontalGradient(
+                        colors = colors.backgroundGradient,
+                        startX = 0f,
+                        endX = 2000f
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Sprawdź dostępność sali",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = colors.primaryTextColor
+                ),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
 }
 
 @Composable
@@ -893,24 +950,34 @@ fun TopDownElement(
     imageVector: ImageVector? = null,
     title: String? = "Wybierz datę",
     titleStyle: TextStyle = MaterialTheme.typography.bodyLarge,
-    titleColor: Color = Color(0xFF5D4037), // Przygaszony brąz dla naturalności
-    iconTint: Color = Color(0xFF795548), // Stonowany, ciepły brąz
-    containerColor: Brush = Brush.verticalGradient(
-        colors = listOf(Color(0xFFF3E5AB), Color(0xFFD7CCC8)) // Ciepły beżowy gradient
-    ),
-    borderColor: Color = Color(0xFFBCAAA4), // Ciepły taupe dla obramowania
-    expandedContainerColor: Color = Color(0xFFEFEDE8), // Jasne tło po rozwinięciu
-    expandedBorderColor: Color = Color(0xFF8D6E63), // Przygaszony brązowy dla obramowania rozwiniętego
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val isDarkTheme = isSystemInDarkTheme()
+
+    // Definicja kolorów harmonizujących z tłem
+    val titleColor = if (isDarkTheme) Color(0xFFAEDFF7) else Color(0xFF3E2723)
+    val iconTint = if (isDarkTheme) Color(0xFF48C9B0) else Color(0xFF6D4C41)
+    val containerBrush = if (isDarkTheme) {
+        Brush.verticalGradient(
+            colors = listOf(Color(0xFF34495E), Color(0xFF2C3E50))
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(Color(0xFFFCE5D1), Color(0xFFFDEDD4))
+        )
+    }
+    val borderColor = if (isDarkTheme) Color(0xFF1ABC9C) else Color(0xFF8D6E63)
+    val expandedContainerColor = if (isDarkTheme) Color(0xFF2C3E50) else Color(0xFFFFF8E1)
+    val expandedBorderColor = if (isDarkTheme) Color(0xFF48C9B0) else Color(0xFF6D4C41)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
             .padding(top = 16.dp)
-            .shadow(4.dp, RoundedCornerShape(12.dp)) // Dodanie cienia dla głębi
+            .shadow(4.dp, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
-            .background(containerColor)
+            .background(containerBrush)
             .border(1.dp, borderColor, RoundedCornerShape(12.dp))
             .padding(16.dp)
     ) {
@@ -962,6 +1029,8 @@ fun TopDownElement(
         }
     }
 }
+
+
 
 
 
