@@ -24,10 +24,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemColors
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,14 +36,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,7 +52,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.apptemplates.R
-import com.example.apptemplates.TopBarPreview
 import com.example.apptemplates.data.reservation.RecurrenceFrequency
 import com.example.apptemplates.data.reservation.Reservation
 import com.example.apptemplates.data.room.EquipmentType
@@ -67,7 +60,6 @@ import com.example.apptemplates.data.user.ActiveUser
 import com.example.apptemplates.data.user.User
 import com.example.apptemplates.form.ScreenState
 import com.example.apptemplates.form.UiError
-import com.example.apptemplates.montserratFontFamily
 import com.example.apptemplates.navigation.route.AppScreen
 import com.example.apptemplates.presentation.login.sign_in.component.CommonLoadingSnackbar
 import com.example.apptemplates.presentation.login.sign_in.component.getThemeTopAppBarColors
@@ -80,11 +72,12 @@ import com.example.apptemplates.presentation.main.profile.ProfileViewModel
 import com.example.apptemplates.presentation.main.profile.domain.SignOutUseCase
 import com.example.apptemplates.presentation.main.reservation.ReservationView
 import com.example.apptemplates.presentation.main.reservation.ReservationViewModel
+import com.example.apptemplates.presentation.main.room_availability.LessonBookedSlot
 import com.example.apptemplates.presentation.main.room_availability.RoomAvailabilityView
 import com.example.apptemplates.presentation.main.room_availability.RoomAvailabilityViewModel
+import com.example.apptemplates.presentation.main.room_availability.UserBookedSlot
 import com.example.apptemplates.presentation.main.settings.SettingsScreen
 import com.example.apptemplates.presentation.main.settings.SettingsViewModel
-import com.example.apptemplates.ui.theme.ThemeColors
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -203,10 +196,13 @@ data class MainUiState(
     val isRecurring: Boolean = false, // Czy jest cykliczna
     val recurringFrequency: RecurrenceFrequency? = null, // Rodzaj cykliczonosci
     val endRecurrenceDate: LocalDate? = null,   // Zakonczenie cyklu
+    //val formattedEndDate: String? = null,
+    val duration: Int = 1,
 
     val selectedFloor: Int? = null, // Wybrany piętro
     val floorName: String? = null,
     val selectedEquipment: List<EquipmentType> = emptyList(), // Wybrane conflictos
+    val ignoreEquipment: Boolean = true,
 
     val availableRooms: List<Room> = emptyList(),
 
@@ -221,17 +217,81 @@ data class MainUiState(
     val lastSeen: Long = 1,
 
     //Availabilty
+    val showFloorSelector: Boolean = false,
+    val showRoomSelector: Boolean = false,
+    val isDatePickerVisible: Boolean = false,
+    val isFloorSelectorVisible: Boolean = false,
+    val isRoomSelectorVisible: Boolean = false,
+    val isButtonVisible: Boolean = false,
+
     val selectedFloorName: String = "Parter",
     val selectedRoomNumber: String = "",
     val selectedFloorNumber: Int? = null,
     val selectedDateCheck: LocalDate = LocalDate.now(),
     val selectedRoom: Room? = null,
     val times: List<Triple<Long, Long, Boolean>>? = null,
+    val userBookedSlots: List<UserBookedSlot>? = null,
+    val lessonBookedSlots: List<LessonBookedSlot>? = null,
     val canSeeRoomAvailability: Boolean = false,
 
 
     // All
     val profileImageUrl: String = "",
+)
+
+data class HomeState(
+    val user: User? = null,
+    val rooms: List<Room> = emptyList(),
+    val reservations: List<Reservation> = emptyList(),
+    val errors: List<UiError> = emptyList(),
+    val lastUpdated: LocalDateTime? = null,  // Track when data was last updated
+    val isLoading: Boolean = false,
+    val reservationTimePeriods: TimePeriod = TimePeriod.TODAY,
+    val filteredReservations: List<Reservation> = emptyList(),
+    val reservationsLeft: Int? = null,
+    val maxReservations: Int? = null,
+    val lastReservationDate: String? = null,
+    val showReservationDetailsDialog: Boolean = false,
+    val selectedReservation: Reservation? = null,
+    val selectedAdditionalEquipment: MutableList<EquipmentType> = mutableListOf(),
+)
+
+data class ReservationState(
+    val reservationError: ReservationError? = null,
+    val selectedDate: LocalDate? = null, // Data rozpoczęcia i zakończenia jeśli nie jest cykliczna
+    val selectedTime: LocalTime? = null, // Godzina rozpoczęcia
+    val selectedEndTime: LocalTime? = null, // Godzina zakończenia
+    val selectedAttendees: Int = 1, // Liczba uczestników
+    val isRecurring: Boolean = false, // Czy jest cykliczna
+    val recurringFrequency: RecurrenceFrequency? = null, // Rodzaj cykliczności
+    val endRecurrenceDate: LocalDate? = null,   // Zakończenie cyklu
+    val selectedFloor: Int? = null, // Wybrane piętro
+    val floorName: String? = null,
+    val selectedEquipment: List<EquipmentType> = emptyList(), // Wybrane wyposażenie
+    val availableRooms: List<Room> = emptyList(),
+    val selectedRoomToReserve: Room? = null,
+)
+
+data class ProfileState(
+    val username: String = ActiveUser.getUser()?.username ?: "Nieznajomy",
+    val role: String = ActiveUser.getUser()?.role.toString() ?: "Nieznajomy",
+    val email: String = ActiveUser.getUser()?.email ?: "nieznany",
+    val isEmailVerified: Boolean = ActiveUser.isUserVerified(),
+    val overallReservationCount: Int = ActiveReservations.getAllReservations().value.size,
+    val lastSeen: Long = 1,
+)
+
+data class AvailabilityState(
+    val selectedFloorName: String = "Parter",
+    val selectedRoomNumber: String = "",
+    val selectedFloorNumber: Int? = null,
+    val selectedDate: LocalDate? = null,
+    val selectedDateCheck: LocalDate = LocalDate.now(),
+    val selectedRoom: Room? = null,
+    val times: List<Triple<Long, Long, Boolean>>? = null,
+    val userBookedSlots: List<UserBookedSlot>? = null,
+    val lessonBookedSlots: List<LessonBookedSlot>? = null,
+    val canSeeRoomAvailability: Boolean = false,
 )
 
 enum class TimePeriod {
@@ -242,92 +302,6 @@ sealed class ReservationError {
     data class TimeConflict(val message: String) : ReservationError()
     data class AttendeesConflict(val message: String) : ReservationError()
     data class RecurrenceConflict(val message: String) : ReservationError()
-}
-
-@Composable
-fun BottomBar(
-    navController: NavController,
-    currentScreenState: MutableState<MainUiState>,
-    onNavigate: (String) -> Unit,
-    onOptionsClick: () -> Unit
-) {
-    val theme = getThemeTopAppBarColors()
-    val isDarkTheme = isSystemInDarkTheme()
-
-    val items = listOf(
-        AppScreen.Main.Home,
-        AppScreen.Main.RoomAvailability,
-        AppScreen.Main.Reservation,
-        AppScreen.Main.More
-    )
-
-    NavigationBar(
-        modifier = Modifier
-            .background(theme.gradientBrush)
-            .padding(horizontal = 8.dp),
-        containerColor = Color.Transparent,
-        contentColor = theme.textColor,
-        tonalElevation = 10.dp
-    ) {
-        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-
-        items.forEach { screen ->
-            NavigationBarItem(
-                icon = { NavigationBarItemIcon(screen, currentRoute) },
-                label = { NavigationBarItemText(screen, currentRoute, theme) },
-                selected = currentRoute == screen.route,
-                onClick = {
-
-                    if (currentScreenState.value.screenState == ScreenState.Loading) return@NavigationBarItem
-
-                    if (currentRoute != screen.route) {
-
-                        if (screen.route == AppScreen.Main.More.route) onOptionsClick()
-                        else onNavigate(screen.route)
-
-                    }
-
-                }, colors = navigationBarItemColors(theme, isDarkTheme), alwaysShowLabel = true
-            )
-        }
-    }
-}
-
-@Composable
-private fun NavigationBarItemIcon(screen: AppScreen, currentRoute: String?) {
-    Icon(
-        screen.icon!!,
-        contentDescription = screen.label!!,
-        modifier = Modifier
-            .size(24.dp)
-            .scale(if (currentRoute == screen.route) 1.3f else 1f)
-    )
-}
-
-@Composable
-private fun NavigationBarItemText(screen: AppScreen, currentRoute: String?, theme: ThemeColors) {
-    Text(
-        text = screen.label!!,
-        fontFamily = montserratFontFamily,
-        textAlign = TextAlign.Center,
-        fontWeight = FontWeight.Medium,
-        fontSize = if (currentRoute == screen.route) 12.sp else 10.sp,
-        color = if (currentRoute == screen.route) theme.textColor else Color.Gray
-    )
-}
-
-@Composable
-private fun navigationBarItemColors(
-    theme: ThemeColors,
-    isDarkTheme: Boolean
-): NavigationBarItemColors {
-    return NavigationBarItemDefaults.colors(
-        selectedIconColor = theme.textColor,
-        unselectedIconColor = if (isDarkTheme) Color(0xFFD1D1D1) else Color(0xFF3C4043),
-        selectedTextColor = theme.textColor,
-        unselectedTextColor = if (isDarkTheme) Color(0xFFD1D1D1) else Color(0xFF3C4043),
-        indicatorColor = Color.Transparent
-    )
 }
 
 
@@ -379,7 +353,8 @@ private fun NavGraphBuilder.reservationScreen(
 
 private fun NavGraphBuilder.roomAvailabilityScreen(
     padding: PaddingValues,
-    onScreenStateChange: (MainUiState) -> Unit
+    onScreenStateChange: (MainUiState) -> Unit,
+    navController: NavHostController
 ) {
     composable(AppScreen.Main.RoomAvailability.route) { backStackEntry ->
         val roomAvailabilityViewModel: RoomAvailabilityViewModel = viewModel(backStackEntry)
@@ -391,7 +366,14 @@ private fun NavGraphBuilder.roomAvailabilityScreen(
             state = roomAvailabilityViewModel.state.collectAsState().value,
             viewModel = roomAvailabilityViewModel,
             padding = padding,
-            modifier = Modifier.padding(padding)
+            modifier = Modifier.padding(padding),
+            navigateToReservation = {
+                navController.navigate(AppScreen.Main.Reservation.route) {
+                    popUpTo(AppScreen.Main.route) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
         )
     }
 }
@@ -440,7 +422,7 @@ private fun MainContentNavGraph(
 
         homeScreen(padding, onScreenStateChange)
         reservationScreen(padding, onScreenStateChange, navController)
-        roomAvailabilityScreen(padding, onScreenStateChange)
+        roomAvailabilityScreen(padding, onScreenStateChange, navController)
         profileScreen(padding, onLogout, onScreenStateChange)
         settingsScreen()
     }

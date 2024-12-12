@@ -44,7 +44,6 @@ import com.example.apptemplates.navigation.route.AppScreen
 import com.example.apptemplates.presentation.login.login_menu.AuthViewModel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun RootNavGraph(navController: NavHostController) {
@@ -70,7 +69,7 @@ fun LoadingScreen(navController: NavController) {
     LaunchedEffect(isUserAuthenticated) {
         when (isUserAuthenticated) {
             true -> {
-                delay(2.5.seconds)
+                //delay(2.5.seconds)
                 navController.navigate(AppScreen.Main.route) {
                     popUpTo(AppScreen.Loading.route) { inclusive = true }
                 }

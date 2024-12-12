@@ -2,7 +2,6 @@ package com.example.apptemplates.presentation.main.reservation
 
 import android.util.Log
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TimePickerState
 import androidx.lifecycle.viewModelScope
 import com.example.apptemplates.data.reservation.RecurrenceFrequency
 import com.example.apptemplates.data.reservation.RecurrencePattern
@@ -22,6 +21,7 @@ import com.example.apptemplates.presentation.main.reservation.domain.FetchAvaila
 import com.example.apptemplates.presentation.main.reservation.domain.FetchLessonsUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.FetchRecurringReservationsUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.FetchStandardReservationsUseCase
+import com.example.apptemplates.presentation.main.room_availability.objects.QuickReservation
 import com.example.apptemplates.presentation.main.temp.ReservationError
 import com.example.apptemplates.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.update
@@ -251,12 +251,12 @@ class ReservationViewModel(
         _state.value = _state.value.copy(selectedDate = date)
     }
 
-    fun changeTime(time: TimePickerState) {
-        _state.value = _state.value.copy(
-            selectedTime = LocalTime.of(
-                time.hour, time.minute
+    fun changeTime(time: LocalTime) {
+        _state.update {
+            it.copy(
+                selectedTime = time
             )
-        )
+        }
     }
 
     fun changeAttendees(attendees: Int) {
@@ -274,20 +274,50 @@ class ReservationViewModel(
     }
 
     fun changeFrequency(frequency: RecurrenceFrequency) {
-        _state.value = _state.value.copy(recurringFrequency = frequency)
+        _state.value =
+            _state.value.copy(recurringFrequency = frequency, duration = adjustDuration(frequency))
     }
 
-    fun changeEndTime(timePickerState: TimePickerState) {
+    private fun adjustDuration(frequency: RecurrenceFrequency): Int {
+        val currentFrequency = _state.value.recurringFrequency ?: RecurrenceFrequency.WEEKLY
+        val duration = _state.value.duration
+
+        // Przeliczenie na podstawie różnicy w częstotliwościach
+        val currentFactor = when (currentFrequency) {
+            RecurrenceFrequency.WEEKLY -> 1
+            RecurrenceFrequency.BIWEEKLY -> 2
+            RecurrenceFrequency.MONTHLY -> 4
+        }
+
+        val newFactor = when (frequency) {
+            RecurrenceFrequency.WEEKLY -> 1
+            RecurrenceFrequency.BIWEEKLY -> 2
+            RecurrenceFrequency.MONTHLY -> 4
+        }
+
+        // Dopasowanie duration do nowej częstotliwości
+        return (duration * currentFactor / newFactor).coerceAtLeast(1)
+    }
+
+
+    fun changeEndTime(time: LocalTime) {
         _state.update {
             it.copy(
-                selectedEndTime = LocalTime.of(
-                    timePickerState.hour, timePickerState.minute
-                )
+                selectedEndTime = time
             )
         }
     }
 
-    fun changeEndDate(date: LocalDate) {
+    fun changeReservationTimes(startTime: LocalTime, endTime: LocalTime) {
+        _state.update {
+            it.copy(
+                selectedTime = startTime,
+                selectedEndTime = endTime
+            )
+        }
+    }
+
+    fun changeEndDate(date: LocalDate?) {
         _state.update { it.copy(endRecurrenceDate = date) }
     }
 
@@ -310,6 +340,108 @@ class ReservationViewModel(
     fun getMaximumAttendees(): Int {
         return permission.getMaximumAttendees()
     }
+
+    fun checkIfQuickReservationIsReady() {
+        if (QuickReservation.getSelectedDate() != null && QuickReservation.getStartTime() != null) {
+            _state.update {
+                it.copy(
+                    selectedDate = QuickReservation.getSelectedDate(),
+                    selectedTime = QuickReservation.getStartTime(),
+                    selectedEndTime = QuickReservation.getEndTime()
+                )
+            }
+        }
+    }
+
+    fun updateIgnoreEquipment(ignoreEquipment: Boolean) {
+        _state.update { it.copy(ignoreEquipment = ignoreEquipment) }
+    }
+
+    fun updateEndRecurrenceDate() {
+
+        val freq = _state.value.recurringFrequency ?: RecurrenceFrequency.WEEKLY
+        val addWeeks = when (freq) {
+            RecurrenceFrequency.WEEKLY -> 1
+            RecurrenceFrequency.BIWEEKLY -> 2
+            RecurrenceFrequency.MONTHLY -> 4
+        }
+
+        if (_state.value.selectedDate == null) return
+
+        val updatedEndRecurrenceDate = _state.value.selectedDate!!.plusWeeks(addWeeks.toLong())
+
+        _state.update {
+            it.copy(
+                endRecurrenceDate = updatedEndRecurrenceDate,
+                recurringFrequency = freq,
+            )
+        }
+    }
+
+
+    fun updateDuration(step: Int) {
+        _state.update { it.copy(duration = (it.duration + step)) }
+    }
+
+    fun canAddDuration(): Boolean {
+        val endDate = _state.value.endRecurrenceDate ?: return false
+        val selectedDate = _state.value.selectedDate ?: return false
+
+        val addWeeks = when (_state.value.recurringFrequency) {
+            RecurrenceFrequency.WEEKLY -> 1
+            RecurrenceFrequency.BIWEEKLY -> 2
+            RecurrenceFrequency.MONTHLY -> 4
+            null -> return false
+        }
+
+        return endDate.plusWeeks(addWeeks.toLong()).isBefore(selectedDate.plusMonths(4))
+    }
+
+
+    fun getDurationText(): String {
+        val frequency = _state.value.recurringFrequency ?: RecurrenceFrequency.WEEKLY
+        val duration = _state.value.duration
+
+        return when (frequency) {
+
+            RecurrenceFrequency.MONTHLY -> "$duration ${
+                getPluralForm(
+                    duration,
+                    "Miesiąc",
+                    "Miesiące",
+                    "Miesięcy"
+                )
+            }"
+
+            else -> "$duration ${
+                getPluralForm(
+                    duration,
+                    "Tydzień",
+                    "Tygodnie",
+                    "Tygodni"
+                )
+            }"
+        }
+    }
+
+    // Funkcja pomocnicza do wybierania poprawnej formy liczbowej
+    private fun getPluralForm(
+        value: Int,
+        singular: String,
+        pluralFew: String,
+        pluralMany: String
+    ): String {
+        return when (value) {
+            1 -> singular
+            in 2..4 -> pluralFew
+            else -> pluralMany
+        }
+    }
+
+    fun clearAvailableRooms() {
+        _state.update { it.copy(availableRooms = emptyList()) }
+    }
+
 
 }
 

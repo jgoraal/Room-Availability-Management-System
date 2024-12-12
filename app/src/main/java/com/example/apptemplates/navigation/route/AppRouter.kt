@@ -61,10 +61,10 @@ sealed class AppScreen(
     data object Main : AppScreen(MAIN) {
         data object Home : AppScreen(HOME, Icons.Default.Home, "Strona Główna")
         data object Reservation :
-            AppScreen(RESERVATION, Icons.AutoMirrored.Filled.Assignment, "Rezerwacje")
+            AppScreen(RESERVATION, Icons.AutoMirrored.Filled.Assignment, "Zarezerwuj")
 
         data object RoomAvailability :
-            AppScreen(ROOM_AVAILABILITY, Icons.Default.CalendarMonth, "Dostępność")
+            AppScreen(ROOM_AVAILABILITY, Icons.Default.CalendarMonth, "Kalendarz")
 
         data object Profile : AppScreen(PROFILE, Icons.Default.AccountCircle, "Profil")
         data object Settings : AppScreen(SETTINGS, Icons.Default.Settings, "Ustawienia")

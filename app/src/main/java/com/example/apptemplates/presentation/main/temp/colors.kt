@@ -205,6 +205,30 @@ object DarkThemeHeaderColors : ThemeHeaderColors {
 }
 
 
+object CustomLightThemeColors : ThemeColors {
+    override val headerBackgroundGradient = listOf(Color(0xFFF9FBE7), Color(0xFFE8F5E9))
+    override val borderColor = Color(0xFFBDBDBD)
+    override val profileBackground = Color(0xFFE8F5E9)
+    override val textColorPrimary = Color(0xFF212121)
+    override val textColorSecondary = Color(0xFF757575)
+    override val progressColor = Color(0xFF4CAF50)
+    override val progressTrackColor = Color(0xFFC8E6C9)
+    override val iconColor = Color(0xFF4CAF50)
+}
+
+object CustomDarkThemeColors : ThemeColors {
+    override val headerBackgroundGradient = listOf(Color(0xFF263238), Color(0xFF37474F))
+    override val borderColor = Color(0xFF546E7A)
+    override val profileBackground = Color(0xFF37474F)
+    override val textColorPrimary = Color(0xFFECEFF1)
+    override val textColorSecondary = Color(0xFFB0BEC5)
+    override val progressColor = Color(0xFF80CBC4)
+    override val progressTrackColor = Color(0xFF263238)
+    override val iconColor = Color(0xFF80CBC4)
+}
+
+
+
 
 
 

@@ -1,25 +1,24 @@
-package com.example.apptemplates
+package com.example.apptemplates.presentation.main.temp
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -39,15 +38,10 @@ fun TopBarPreview(
     navController: NavController,
     onNavigate: (String) -> Unit
 ) {
-
-
     val themeColors = getThemeTopAppBarColors()
-
-
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-
-    TopAppBar(
+    CenterAlignedTopAppBar(
         modifier = Modifier
             .fillMaxWidth()
             .clip(
@@ -55,36 +49,26 @@ fun TopBarPreview(
                     bottomStart = 24.dp,
                     bottomEnd = 24.dp
                 )
-            ) // Rounded corners for modern look
-            .background(themeColors.gradientBrush)
-            .padding(horizontal = 16.dp),
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            )
+            .background(themeColors.gradientBrush),
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent),
         title = {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Text(
-                    text = Constants.TAG,
-                    style = topBarTitleStyle(themeColors.textColor)
+                    text = if (currentRoute?.equals("home", ignoreCase = true) == true) {
+                        Constants.TAG
+                    } else {
+                        getTopBarTitle(currentRoute)
+                    },
+                    style = topBarTitleStyle(themeColors.textColor),
+                    textAlign = TextAlign.Center
                 )
-
-
                 DynamicDateText(themeColors)
-
             }
         },
-        navigationIcon = {
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(
-                    modifier = Modifier.size(28.dp),
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Menu Icon",
-                    tint = themeColors.textColor
-                )
-            }
-        },
+        // Brak navigationIcon - nie dodajemy ikony po lewej stronie
         actions = {
             IconButton(onClick = {
                 if (currentRoute != AppScreen.Main.Profile.route) {
@@ -102,21 +86,30 @@ fun TopBarPreview(
     )
 }
 
-
 @Composable
 fun DynamicDateText(themeColors: ThemeColors) {
-    // Pobierz bieżącą datę
     val currentDate = Date()
-
-    // Ustal format daty (np. piątek, 27 września)
     val formatter = SimpleDateFormat("EEEE, d MMMM", Locale("pl"))
     val formattedDate = formatter.format(currentDate)
-
-    // Upewnij się, że pierwsza litera dnia tygodnia jest wielka
     val formattedDateCapitalized = formattedDate.replaceFirstChar { it.uppercase() }
 
     Text(
         text = formattedDateCapitalized,
-        style = topBarSubtitleStyle(themeColors.textColor)
+        style = topBarSubtitleStyle(themeColors.textColor),
+        textAlign = TextAlign.Center
     )
+}
+
+@Composable
+private fun getTopBarTitle(route: String?): String {
+    return when (route) {
+        AppScreen.Main.Home.route -> "Strona Główna"
+        AppScreen.Main.Reservation.route -> "Zarezerwuj"
+        AppScreen.Main.RoomAvailability.route -> "Kalendarz"
+        AppScreen.Main.Profile.route -> "Profil"
+        AppScreen.Main.Settings.route -> "Ustawienia"
+        AppScreen.Main.LogOut.route -> "Wyloguj"
+        AppScreen.Main.More.route -> "Więcej"
+        else -> Constants.TAG
+    }
 }

@@ -1,88 +1,48 @@
 package com.example.apptemplates.presentation.main.reservation
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
-import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.EventAvailable
-import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.EventRepeat
-import androidx.compose.material.icons.filled.FilterAlt
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.RoomPreferences
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.apptemplates.data.reservation.RecurrenceFrequency
 import com.example.apptemplates.data.room.EquipmentType
 import com.example.apptemplates.data.room.Room
 import com.example.apptemplates.form.ScreenState
+import com.example.apptemplates.presentation.main.reservation.components.AdditionalFiltersPicker
 import com.example.apptemplates.presentation.main.reservation.components.AvailableRoomsList
 import com.example.apptemplates.presentation.main.reservation.components.CalendarViewWithNavigation
 import com.example.apptemplates.presentation.main.reservation.components.DialogRoomReservation
-import com.example.apptemplates.presentation.main.reservation.components.NumberOfAttendeesView
-import com.example.apptemplates.presentation.main.reservation.components.TimePickerView
+import com.example.apptemplates.presentation.main.reservation.components.FindAvailableRoomsButton
+import com.example.apptemplates.presentation.main.reservation.components.NumberOfAttendeesSelector
+import com.example.apptemplates.presentation.main.reservation.components.RecurrencePickerContent
+import com.example.apptemplates.presentation.main.reservation.components.SelectedData
+import com.example.apptemplates.presentation.main.reservation.components.TimePickerOption
+import com.example.apptemplates.presentation.main.room_availability.TopDownElement
+import com.example.apptemplates.presentation.main.room_availability.objects.QuickReservation
 import com.example.apptemplates.presentation.main.temp.MainUiState
 import com.example.apptemplates.ui.theme.getContentBackGround
 import java.time.LocalDate
@@ -122,16 +82,18 @@ fun ReservationView(
 
 
     DialogRoomReservation(
-        state,
-        viewModel,
-        navigateOnSuccess
+        state, viewModel, navigateOnSuccess
     ) { viewModel.changeSelectedRoom(null) }
 
 
-    val showTimePicker = remember { mutableStateOf(false) }
-    val showAttendeesPicker = remember { mutableStateOf(false) }
-    val showRecurringPicker = remember { mutableStateOf(false) }
-    val showOtherFiltersPicker = remember { mutableStateOf(false) }
+    viewModel.checkIfQuickReservationIsReady()
+
+
+    val showTimePicker = remember { mutableStateOf(QuickReservation.getStartTime() != null) }
+    val showAttendeesPicker = remember { mutableStateOf(QuickReservation.getStartTime() != null) }
+    val showRecurringPicker = remember { mutableStateOf(QuickReservation.getStartTime() != null) }
+    val showOtherFiltersPicker =
+        remember { mutableStateOf(QuickReservation.getStartTime() != null) }
 
     // Main LazyColumn for the form elements, excluding the room list
     LazyColumn(
@@ -140,32 +102,57 @@ fun ReservationView(
             .background(getContentBackGround())
             .padding(padding)
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(if (state.availableRooms.isEmpty()) 16.dp else 8.dp)
     ) {
         // Existing items like calendar, time picker, etc.
-        item { ReservationHeader() }
+        item { /*ReservationHeader()*/ }
         item {
-            CalendarPicker(
+            CalendarPickerInTopDown(
                 state,
                 viewModel,
-            ) { showTimePicker.value = true }
+            ) {
+                if (state.endRecurrenceDate != null) {
+                    viewModel.updateEndRecurrenceDate()
+                }
+                showTimePicker.value = true
+
+                if (state.availableRooms.isNotEmpty()) {
+                    viewModel.clearAvailableRooms()
+                }
+
+            }
         }
 
         if (showTimePicker.value) {
-            item { TimePicker(state, viewModel) { showAttendeesPicker.value = true } }
-        }
-
-        if (showAttendeesPicker.value) {
             item {
-                NumberOfAttendeesSelector(viewModel, state) {
+                TimePickerInTopDown(state, viewModel) {
                     showRecurringPicker.value = true
+                    showAttendeesPicker.value = true
                     showOtherFiltersPicker.value = true
+
+                    if (state.availableRooms.isNotEmpty()) {
+                        viewModel.clearAvailableRooms()
+                    }
                 }
             }
         }
 
         if (showRecurringPicker.value && viewModel.canUserMakeRecurringReservation()) {
             item { CalendarEndDatePicker(viewModel = viewModel, state = state) }
+        }
+
+        if (showAttendeesPicker.value) {
+            item {
+                NumberOfAttendeesSelector(viewModel, state) {
+                    if (state.availableRooms.isNotEmpty()) {
+                        viewModel.clearAvailableRooms()
+                    }
+
+
+                    showRecurringPicker.value = true
+                    showOtherFiltersPicker.value = true
+                }
+            }
         }
 
         if (showOtherFiltersPicker.value) {
@@ -189,7 +176,7 @@ fun ReservationView(
 
         if (showAttendeesPicker.value) {
             item {
-                FindAvailableRoomsButton(viewModel)
+                FindAvailableRoomsButton(viewModel, isSystemInDarkTheme())
             }
         }
 
@@ -199,461 +186,20 @@ fun ReservationView(
 }
 
 
-@Composable
-fun FindAvailableRoomsButton(viewModel: ReservationViewModel = ReservationViewModel()) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Button(
-            onClick = { viewModel.findRooms() },
-            modifier = Modifier
-                .width(280.dp)
-                .height(56.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.secondary
-                        )
-                    )
-                ),
-            contentPadding = PaddingValues(0.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent // Use gradient as background
-            ),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search Icon",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Szukaj dostępnych sal",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                )
-            }
-        }
-    }
-
-}
-
-@Composable
-fun ReservationHeader() {
-    val isDarkTheme = isSystemInDarkTheme()
-
-    // Definicja gradientów na podstawie motywu
-    val gradientColors = if (isDarkTheme) {
-        // Gradient "Turquoise Flow" dla ciemnego motywu
-        listOf(
-            Color(0xFF136A8A), // #136a8a
-            Color(0xFF267871)  // #267871
-        )
-    } else {
-        // Gradient "Dance To Forget" dla jasnego motywu
-        listOf(
-            Color(0xFFCC3E45), // Ciemniejszy czerwony
-            Color(0xFFC2B021)  // Ciemniejszy żółty
-        )
-    }
-
-    // Kolor obramowania
-    val borderColor = if (isDarkTheme) {
-        Color(0xFF267871) // Jeden z kolorów gradientu dla spójności
-    } else {
-        Color(0xFFFF4E50) // Jeden z kolorów gradientu dla spójności
-    }
-
-    // Kolor tekstu
-    val textColor = if (isDarkTheme) {
-        Color(0xFFFFFFFF) // Biały dla ciemnego motywu
-    } else {
-        Color(0xFF3E2723) // Głęboki brąz dla jasnego motywu
-    }
-
-    // Styl tekstu
-    val textStyle = MaterialTheme.typography.headlineMedium.copy(
-        color = textColor,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 1.2.sp
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(
-                brush = Brush.horizontalGradient(
-                    colors = gradientColors
-                )
-            )
-            .border(
-                BorderStroke(2.dp, borderColor),
-                RoundedCornerShape(16.dp)
-            )
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        contentAlignment = Alignment.Center // Wyśrodkowanie zawartości w Box
-    ) {
-        Text(
-            text = "Złóż rezerwację",
-            style = textStyle,
-        )
-    }
-}
-
-
-@Composable
-fun AdditionalFiltersPicker(viewModel: ReservationViewModel, state: MainUiState) {
-    var isAdditionalFiltersVisible by remember { mutableStateOf(false) }
-    val availableEquipment = listOf(
-        EquipmentType.COMPUTER, EquipmentType.PROJECTOR, EquipmentType.WHITEBOARD
-    )  // Available equipment options
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .background(color = MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    ) {
-        // Filter header with clickable behavior
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isAdditionalFiltersVisible = !isAdditionalFiltersVisible },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.FilterAlt, contentDescription = "FilterAlt Icon"
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Wybierz dodatkowe wymagania", style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                imageVector = if (isAdditionalFiltersVisible) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = "Toggle Filters"
-            )
-        }
-
-        // Animated visibility for filters
-        AnimatedVisibility(
-            visible = isAdditionalFiltersVisible,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-
-                // Floor picker
-                Text(text = "Wybierz piętro", style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Dropdown for selecting the floor
-                DropdownMenuFloorPicker(selectedFloor = state.selectedFloor) { selectedFloor ->
-                    viewModel.updateSelectedFloor(selectedFloor)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Equipment picker
-                Text(text = "Wybierz wyposażenie:", style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Equipment selection using checkboxes
-                availableEquipment.forEach { equipment ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val updatedEquipment =
-                                    if (state.selectedEquipment.contains(equipment)) {
-                                        state.selectedEquipment.minus(equipment)
-                                    } else {
-                                        state.selectedEquipment.plus(equipment)
-                                    }
-                                viewModel.updateSelectedEquipment(updatedEquipment)
-                            }, verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(checked = state.selectedEquipment.contains(equipment),
-                            onCheckedChange = { isChecked ->
-                                val updatedEquipment = if (isChecked) {
-                                    state.selectedEquipment.plus(equipment)
-                                } else {
-                                    state.selectedEquipment.minus(equipment)
-                                }
-                                viewModel.updateSelectedEquipment(updatedEquipment)
-                            })
-                        Text(text = equipment.getNameInPolish())
-                    }
-                }
-            }
-        }
-    }
-}
-
-fun EquipmentType.getNameInPolish(): String {
-    return when (this) {
-        EquipmentType.COMPUTER -> "Komputery"
-        EquipmentType.PROJECTOR -> "Projektor"
-        EquipmentType.WHITEBOARD -> "Tablica"
-    }
-}
-
-
-// Helper function for floor picker dropdown menu
-@Composable
-fun DropdownMenuFloorPicker(selectedFloor: Int?, onFloorSelected: (Int?) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
-    val floors = mapOf(
-        "Wszystkie" to null,
-        "Parter" to 1,
-        "1 piętro" to 2,
-        "2 piętro" to 3,
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentSize(Alignment.TopStart)
-            .clickable { expanded = !expanded }, contentAlignment = Alignment.Center
-    ) {
-        Text(text = selectedFloor.getFloorName(), modifier = Modifier.padding(8.dp))
-
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            floors.forEach { (floor, floorNumber) ->
-                DropdownMenuItem(onClick = {
-                    onFloorSelected(floorNumber)
-                    expanded = false
-                }, text = { Text(text = floor.toString()) })
-            }
-        }
-    }
-}
-
-
-@Composable
-fun SelectedData(viewModel: ReservationViewModel, state: MainUiState, vararg show: Boolean) {
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, MaterialTheme.colorScheme.secondary, RoundedCornerShape(12.dp))
-            .background(color = MaterialTheme.colorScheme.surfaceVariant)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Date Row (Start and End Date)
-        if (state.selectedDate != null) {
-            DataGroup(
-                items = listOf(
-                    DataRowItem(
-                        icon = Icons.Default.EventAvailable,
-                        label = "Data rozpoczęcia",
-                        value = state.selectedDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
-                    ),
-                    DataRowItem(
-                        icon = Icons.Default.EventBusy,
-                        label = "Data zakończenia",
-                        value = (state.endRecurrenceDate ?: state.selectedDate)
-                            .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
-                    )
-                )
-            )
-        }
-
-        // Time Rows (Start and End Time in one row)
-        if ((state.selectedTime != null || state.selectedEndTime != null) && show[0]) {
-            DataGroup(
-                items = listOf(
-                    DataRowItem(
-                        icon = Icons.Default.Schedule,
-                        label = "Czas rozpoczęcia",
-                        value = state.selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm"))
-                            ?: ""
-                    ),
-                    DataRowItem(
-                        icon = Icons.Default.Schedule,
-                        label = "Czas zakończenia",
-                        value = state.selectedEndTime?.format(DateTimeFormatter.ofPattern("HH:mm"))
-                            ?: ""
-                    )
-                )
-            )
-        }
-
-        // Recurring and Frequency Rows
-        if (show[2] && state.isRecurring && viewModel.canUserMakeRecurringReservation()) {
-
-
-            DataGroup(
-                items = listOf(
-                    DataRowItem(
-                        icon = Icons.Default.EventRepeat,
-                        label = "Cykliczność",
-                        value = if (state.isRecurring) "Tak" else "Nie"
-                    ),
-                    DataRowItem(
-                        icon = Icons.Default.EventRepeat,
-                        label = "Częstotliwość",
-                        value = translateRecurringFrequency(
-                            state.recurringFrequency ?: RecurrenceFrequency.WEEKLY
-                        )
-                    )
-                )
-            )
-        }
-
-        // Attendees Row
-        if (state.selectedAttendees > 0 && show[1]) {
-            DataRow(
-                icon = Icons.Default.People,
-                label = "Liczba uczestników",
-                value = state.selectedAttendees.toString()
-            )
-        }
-
-
-        // Floor and Equipment Rows
-        if (show[3]) {
-            DataRow(
-                icon = Icons.Default.Business,
-                label = "Piętro",
-                value = state.selectedFloor.getFloorName()
-            )
-
-            DataRow(
-                icon = Icons.Default.RoomPreferences,
-                label = "Udogodnienia",
-                value = state.selectedEquipment.joinToString(", ") { it.getNameInPolish() }
-                    .ifEmpty { "Nie wybrano" }
-            )
-        }
-    }
-}
-
-private fun Int?.getFloorName(): String {
-    return when (this) {
-        1 -> "Parter"
-        2 -> "1. Piętro"
-        3 -> "2. Piętro"
-        null -> "Wszystkie"
-        else -> "Nie wybrano"
-    }
-}
-
-@Composable
-fun DataGroup(items: List<DataRowItem>) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        items.forEach { item ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = "${item.label} Icon",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = item.label,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = item.value,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DataRow(icon: ImageVector, label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.05f),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = "$label Icon",
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-        Column {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.primary)
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-            )
-        }
-    }
-}
-
-data class DataRowItem(val icon: ImageVector, val label: String, val value: String)
-
-
-fun translateRecurringFrequency(frequency: RecurrenceFrequency?): String {
-    return when (frequency) {
-        RecurrenceFrequency.WEEKLY -> "Tygodniowo"
-        RecurrenceFrequency.BIWEEKLY -> "Co dwa tygodnie"
-        RecurrenceFrequency.MONTHLY -> "Miesięcznie"
-        else -> "Brak"
-    }
-}
-
-
-@Composable
+/*@Composable
 fun TimePicker(
     state: MainUiState, viewModel: ReservationViewModel, onSuccess: () -> Unit
 ) {
     var isTimePickerVisible by remember { mutableStateOf(false) }
+    var startTime by remember { mutableStateOf(state.selectedTime ?: getPreferredStartTime(state)) }
+    var endTime by remember {
+        mutableStateOf(
+            state.selectedEndTime ?: getPreferredEndTime(
+                startTime, state
+            )
+        )
+    }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -661,7 +207,7 @@ fun TimePicker(
             .padding(top = 16.dp)
             .clip(RoundedCornerShape(12.dp))
             .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .background(color = MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         Row(
@@ -674,149 +220,209 @@ fun TimePicker(
                 imageVector = Icons.Default.AccessTime, contentDescription = "Calendar Icon"
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Wybierz godzinę", style = MaterialTheme.typography.bodyLarge)
-
+            Text(
+                text = state.selectedTime.getTimesText(state.selectedEndTime),
+                style = MaterialTheme.typography.bodyLarge
+            )
             Spacer(modifier = Modifier.weight(1f))
-
-            // Dropdown icon based on the state of the calendar visibility
             Icon(
                 imageVector = if (isTimePickerVisible) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
                 contentDescription = "Toggle Calendar"
             )
         }
 
-        // Animated visibility for the calendar with background and rounded corners
+
+
         AnimatedVisibility(
             visible = isTimePickerVisible,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            LazyRow {
-                item {
-                    TimePickerView(viewModel, state, "Wybierz godzinę rozpoczęcia")
-                    TimePickerView(viewModel, state, "Wybierz godzinę zakończenia", onSuccess)
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-fun NumberOfAttendeesSelector(
-    viewModel: ReservationViewModel,
-    state: MainUiState,
-    onSuccess: () -> Unit
-) {
-    var isNumberOfAttendeesVisible by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .background(color = MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isNumberOfAttendeesVisible = !isNumberOfAttendeesVisible },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Groups, contentDescription = "Calendar Icon"
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Wybierz liczbę uczestników", style = MaterialTheme.typography.bodyLarge)
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Dropdown icon based on the state of the calendar visibility
-            Icon(
-                imageVector = if (isNumberOfAttendeesVisible) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = "Toggle Calendar"
-            )
-        }
-
-        // Animated visibility for the calendar with background and rounded corners
-        AnimatedVisibility(
-            visible = isNumberOfAttendeesVisible,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            NumberOfAttendeesView(viewModel, state, onSuccess)
-        }
-    }
-}
-
-
-@Composable
-fun CalendarPicker(state: MainUiState, viewModel: ReservationViewModel, onSuccess: () -> Unit) {
-    var isCalendarVisible by remember { mutableStateOf(false) }
-
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .background(color = MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    ) {
-        // Date picker header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isCalendarVisible = !isCalendarVisible },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.CalendarMonth, contentDescription = "Calendar Icon"
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Wybierz datę", style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                imageVector = if (isCalendarVisible) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = "Toggle Calendar"
-            )
-        }
-
-        // Animated visibility for the calendar
-        AnimatedVisibility(
-            visible = isCalendarVisible,
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp)
+                    .padding(top = 16.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = Color(0xFFF4F2FF), shape = RoundedCornerShape(12.dp)
-                        )
-                        .border(
-                            2.dp, Color(0xFF9B5DE5), shape = RoundedCornerShape(12.dp)
-                        )
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .padding(16.dp)
-                ) {
-                    CalendarViewWithNavigation(viewModel, startFromSunday = false, onSuccess)
+                // Walidacja przy otwarciu
+                if (isTimePickerVisible && state.selectedTime == null && state.selectedEndTime == null) {
+                    if (!validateTimeDifference(startTime, endTime)) {
+                        errorMessage = "Różnica między godzinami musi wynosić co najmniej 90 minut."
+                    } else {
+                        errorMessage = null
+                        viewModel.changeReservationTimes(startTime, endTime)
+                        onSuccess()
+                    }
                 }
 
-            }
+                // Wyświetlanie komunikatu błędu
+                errorMessage?.let { error ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = error,
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
 
+                TimePickerOption(label = "Godzina rozpoczęcia",
+                    label2 = "Godzina zakończenia",
+                    initialTime = startTime,
+                    initialEndTime = endTime,
+                    state = state,
+                    onStartTimeSelected = { newTime ->
+                        val newEndTime = getPreferredEndTime(newTime, state)
+                        if (validateTimeDifference(newTime, endTime)) {
+                            startTime = newTime
+                            endTime = newEndTime
+                            viewModel.changeTime(newTime)
+                            viewModel.changeEndTime(newEndTime)
+                            errorMessage = null
+                            onSuccess()
+                        } else {
+                            errorMessage = "Niepoprawna godzina rozpoczęcia!"
+                        }
+                    },
+                    onEndTimeSelected = { newTime ->
+                        if (validateTimeDifference(startTime, newTime)) {
+                            endTime = newTime
+                            viewModel.changeEndTime(newTime)
+                            errorMessage = null
+                        } else {
+                            errorMessage = "Niepoprawna godzina zakończenia!"
+                        }
+                    })
+
+
+            }
         }
     }
+}*/
 
 
+@Composable
+fun TimePickerInTopDown(
+    state: MainUiState,
+    viewModel: ReservationViewModel,
+    onSuccess: () -> Unit
+) {
+    val isTimePickerVisible = remember { mutableStateOf(false) }
+    var startTime by remember { mutableStateOf(state.selectedTime ?: getPreferredStartTime(state)) }
+    var endTime by remember {
+        mutableStateOf(
+            state.selectedEndTime ?: getPreferredEndTime(
+                startTime, state
+            )
+        )
+    }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    TopDownElement(
+        visible = isTimePickerVisible,
+        imageVector = Icons.Default.AccessTime,
+        title = state.selectedTime.getTimesText(state.selectedEndTime)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+        ) {
+            // Walidacja przy otwarciu
+            if (state.selectedTime == null && state.selectedEndTime == null) {
+                if (!validateTimeDifference(startTime, endTime)) {
+                    errorMessage = "Różnica między godzinami musi wynosić co najmniej 90 minut."
+                } else {
+                    errorMessage = null
+                    viewModel.changeReservationTimes(startTime, endTime)
+                    onSuccess()
+                }
+            }
+
+            // Wyświetlanie komunikatu błędu
+            errorMessage?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = error,
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            TimePickerOption(
+                label = "Godzina rozpoczęcia",
+                label2 = "Godzina zakończenia",
+                initialTime = startTime,
+                initialEndTime = endTime,
+                state = state,
+                onStartTimeSelected = { newTime ->
+                    val newEndTime = getPreferredEndTime(newTime, state)
+                    if (validateTimeDifference(newTime, endTime)) {
+                        startTime = newTime
+                        endTime = newEndTime
+                        viewModel.changeTime(newTime)
+                        viewModel.changeEndTime(newEndTime)
+                        errorMessage = null
+                        onSuccess()
+                    } else {
+                        errorMessage = "Niepoprawna godzina rozpoczęcia!"
+                    }
+                },
+                onEndTimeSelected = { newTime ->
+                    if (validateTimeDifference(startTime, newTime)) {
+                        endTime = newTime
+                        viewModel.changeEndTime(newTime)
+                        errorMessage = null
+                    } else {
+                        errorMessage = "Niepoprawna godzina zakończenia!"
+                    }
+                }
+            )
+        }
+    }
+}
+
+
+fun validateTimeDifference(startTime: LocalTime, endTime: LocalTime): Boolean {
+    val difference = java.time.Duration.between(startTime, endTime).toMinutes()
+    return difference >= 90 && startTime.isBefore(endTime)
+}
+
+
+@Composable
+fun CalendarPickerInTopDown(
+    state: MainUiState,
+    viewModel: ReservationViewModel,
+    onSuccess: () -> Unit
+) {
+    val isCalendarVisible = remember { mutableStateOf(false) }
+
+    TopDownElement(
+        visible = isCalendarVisible,
+        imageVector = Icons.Default.CalendarMonth,
+        title = state.selectedDate.getTitleText()
+    ) {
+        // Zawartość CalendarPicker
+        //CalendarPickerContent(state, viewModel, onSuccess)
+        CalendarViewWithNavigation(viewModel, startFromSunday = false, onSuccess)
+    }
+}
+
+
+private fun LocalDate?.getTitleText(): String {
+    return when (this) {
+        null -> "Wybierz datę"
+        else -> "Wybrana data " + this.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+    }
+}
+
+private fun LocalTime?.getTimesText(endTime: LocalTime?): String {
+    return when (this) {
+        null -> "Wybierz godziny"
+        else -> "Wybrane godziny " + this.format(DateTimeFormatter.ofPattern("HH:mm")) + " - " + endTime?.format(
+            DateTimeFormatter.ofPattern("HH:mm")
+        )
+    }
 }
 
 
@@ -988,11 +594,9 @@ fun CalendarEndDatePicker(
 }*/
 
 
-@Composable
+/*@Composable
 fun CalendarEndDatePicker(
-    viewModel: ReservationViewModel,
-    state: MainUiState,
-    modifier: Modifier = Modifier
+    viewModel: ReservationViewModel, state: MainUiState, modifier: Modifier = Modifier
 ) {
     var isCalendarVisible by remember { mutableStateOf(false) }
     Column(
@@ -1004,17 +608,64 @@ fun CalendarEndDatePicker(
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        DatePickerHeader(isCalendarVisible) { isCalendarVisible = !isCalendarVisible }
+        DatePickerHeader(state, isCalendarVisible) { isCalendarVisible = !isCalendarVisible }
         RecurrencePickerContent(
-            isVisible = isCalendarVisible,
-            viewModel = viewModel,
-            state = state
+            isVisible = isCalendarVisible, viewModel = viewModel, state = state
         )
     }
-}
+}*/
 
 @Composable
-fun DatePickerHeader(isVisible: Boolean, onClick: () -> Unit) {
+fun CalendarEndDatePicker(
+    viewModel: ReservationViewModel, state: MainUiState, modifier: Modifier = Modifier
+) {
+    val isVisible = remember { mutableStateOf(false) }
+
+    val isDarkTheme = isSystemInDarkTheme()
+
+    // Definicja kolorów harmonizujących z tłem
+    val titleColor = if (isDarkTheme) Color(0xFFAEDFF7) else Color(0xFF3E2723)
+    val iconTint = if (isDarkTheme) Color(0xFF48C9B0) else Color(0xFF6D4C41)
+    val containerBrush = if (isDarkTheme) {
+        Brush.verticalGradient(
+            colors = listOf(Color(0xFF34495E), Color(0xFF2C3E50))
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(Color(0xFFFCE5D1), Color(0xFFFDEDD4))
+        )
+    }
+    val borderColor = if (isDarkTheme) Color(0xFF1ABC9C) else Color(0xFF8D6E63)
+    val expandedContainerColor = if (isDarkTheme) Color(0xFF2C3E50) else Color(0xFFFFF8E1)
+    val expandedBorderColor = if (isDarkTheme) Color(0xFF48C9B0) else Color(0xFF6D4C41)
+
+
+    TopDownElement(
+        visible = isVisible,
+        imageVector = Icons.Default.EventRepeat,
+        title = state.endRecurrenceDate.getRecurrenceText(state.recurringFrequency),
+        titleStyle = MaterialTheme.typography.bodyLarge.copy(
+            color = MaterialTheme.colorScheme.onBackground
+        ),
+        content = {
+            RecurrencePickerContent(
+                isVisible = isVisible.value,
+                viewModel = viewModel,
+                state = state,
+                titleColor = titleColor,
+                iconTint = iconTint,
+                containerBrush = containerBrush,
+                borderColor = borderColor,
+                expandedContainerColor = expandedContainerColor,
+                expandedBorderColor = expandedBorderColor
+            )
+        }
+    )
+}
+
+/*
+@Composable
+fun DatePickerHeader(state: MainUiState, isVisible: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1028,7 +679,7 @@ fun DatePickerHeader(isVisible: Boolean, onClick: () -> Unit) {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "Wybierz cykliczność",
+            text = state.endRecurrenceDate.getRecurrenceText(state.recurringFrequency),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -1038,173 +689,36 @@ fun DatePickerHeader(isVisible: Boolean, onClick: () -> Unit) {
             contentDescription = "Toggle Calendar"
         )
     }
-}
+}*/
 
-@Composable
-fun RecurrencePickerContent(
-    isVisible: Boolean,
-    viewModel: ReservationViewModel,
-    state: MainUiState
-) {
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically()
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-                .background(color = Color(0xFFF4F2FF), shape = RoundedCornerShape(12.dp))
-                .border(2.dp, Color(0xFF9B5DE5), RoundedCornerShape(12.dp))
-                .padding(16.dp)
-        ) {
-            RecurrenceCheckbox(state.isRecurring) {
-                viewModel.changeRecurring(it)
-            }
 
-            if (state.isRecurring) {
-                RecurrenceFrequencyOptions(state.recurringFrequency ?: RecurrenceFrequency.WEEKLY) {
-                    viewModel.changeFrequency(it)
-                }
+private fun LocalDate?.getRecurrenceText(freq: RecurrenceFrequency?): String {
+    if (freq == null) return "Wybierz powtarzalność"
 
-                Spacer(modifier = Modifier.height(16.dp))
-                EndDateSelector(viewModel, state)
-            }
-        }
+    return when (this) {
+        null -> "Wybierz powtarzalność"
+        else -> "${freq.getFrequencyName()} do ${this.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))}"
     }
 }
 
-@Composable
-fun RecurrenceCheckbox(isChecked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            "Czy jest to rezerwacja cykliczna",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Checkbox(checked = isChecked, onCheckedChange = onCheckedChange)
+private fun RecurrenceFrequency.getFrequencyName(): String {
+    return when (this) {
+        RecurrenceFrequency.WEEKLY -> "Tygodniowo"
+        RecurrenceFrequency.BIWEEKLY -> "Co 2 tygodnie"
+        RecurrenceFrequency.MONTHLY -> "Miesięcznie"
     }
 }
 
-@Composable
-fun RecurrenceFrequencyOptions(
-    selectedFrequency: RecurrenceFrequency,
-    onSelect: (RecurrenceFrequency) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        FrequencyOption("Tygodniowo", selectedFrequency == RecurrenceFrequency.WEEKLY) {
-            onSelect(RecurrenceFrequency.WEEKLY)
-        }
-        FrequencyOption("Co dwa tygodnie", selectedFrequency == RecurrenceFrequency.BIWEEKLY) {
-            onSelect(RecurrenceFrequency.BIWEEKLY)
-        }
-        FrequencyOption("Miesięcznie", selectedFrequency == RecurrenceFrequency.MONTHLY) {
-            onSelect(RecurrenceFrequency.MONTHLY)
-        }
-    }
-}
-
-@Composable
+/*@Composable
 fun FrequencyOption(text: String, isSelected: Boolean, onClick: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         RadioButton(selected = isSelected, onClick = onClick)
         Text(text = text, style = MaterialTheme.typography.labelMedium)
     }
-}
+}*/
 
 
-@Composable
-fun EndDateSelector(viewModel: ReservationViewModel, state: MainUiState) {
-    var selectedDuration by remember { mutableIntStateOf(1) }
-    val step = 1
-    val endDate = remember(selectedDuration, state.recurringFrequency) {
-        calculateFormattedEndDate(state, viewModel, selectedDuration)
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .background(
-                color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Wybierz datę zakończenia",
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            IconButton(onClick = { if (selectedDuration > step) selectedDuration -= step }) {
-                Icon(Icons.Default.Remove, contentDescription = "Decrease duration")
-            }
-
-            Text(
-                text = "${
-                    getDuration(
-                        state.recurringFrequency ?: RecurrenceFrequency.WEEKLY,
-                        selectedDuration
-                    )
-                } ${getDurationLabel(state.recurringFrequency ?: RecurrenceFrequency.WEEKLY)}",
-                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.primary)
-            )
-
-            IconButton(onClick = { selectedDuration += step }) {
-                Icon(Icons.Default.Add, contentDescription = "Increase duration")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Data zakończenia",
-            style = MaterialTheme.typography.titleMedium.copy(
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Text(
-            text = endDate,
-            style = MaterialTheme.typography.titleLarge.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
-            ),
-            modifier = Modifier
-                .background(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(vertical = 6.dp, horizontal = 12.dp)
-        )
-    }
-}
-
-// Adjust the duration increment based on recurrence frequency
+/*// Adjust the duration increment based on recurrence frequency
 fun getStepValue(frequency: RecurrenceFrequency): Int {
     return when (frequency) {
         RecurrenceFrequency.WEEKLY -> 1
@@ -1228,20 +742,18 @@ fun getDurationLabel(frequency: RecurrenceFrequency): String {
         RecurrenceFrequency.BIWEEKLY -> "Tygodnie"
         RecurrenceFrequency.MONTHLY -> "Miesiące"
     }
-}
+}*/
 
 // Format end date as dd.MM.yyyy
 fun calculateFormattedEndDate(
-    state: MainUiState,
-    viewModel: ReservationViewModel,
-    duration: Int
+    state: MainUiState, viewModel: ReservationViewModel, duration: Int
 ): String {
     val frequency = state.recurringFrequency ?: RecurrenceFrequency.WEEKLY
     val startDate = state.selectedDate?.atTime(LocalTime.MAX)?.toLocalDate() ?: LocalDate.now()
     val endDate = when (frequency) {
         RecurrenceFrequency.WEEKLY -> startDate.plusWeeks(duration.toLong())
         RecurrenceFrequency.BIWEEKLY -> startDate.plusWeeks(duration.toLong() * 2)
-        RecurrenceFrequency.MONTHLY -> startDate.plusMonths(duration.toLong())
+        RecurrenceFrequency.MONTHLY -> startDate.plusWeeks(duration.toLong() * 4)
     }
 
     viewModel.changeEndDate(endDate)
@@ -1249,60 +761,6 @@ fun calculateFormattedEndDate(
     return formatEndDateWithDay(endDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")))
 }
 
-
-@Composable
-fun EndDateDisplay(endDate: String) {
-    Card(
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 18.dp, horizontal = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Icon(
-                imageVector = Icons.Default.CalendarToday,
-                contentDescription = "End Date Icon",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Text(
-                text = "Data zakończenia",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Text(
-                text = formatEndDateWithDay(endDate),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                ),
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(vertical = 6.dp, horizontal = 12.dp)
-            )
-        }
-    }
-}
 
 fun formatEndDateWithDay(endDate: String): String {
     val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale("pl", "PL"))
@@ -1313,5 +771,69 @@ fun formatEndDateWithDay(endDate: String): String {
 }
 
 
+fun EquipmentType.getNameInPolish(): String {
+    return when (this) {
+        EquipmentType.COMPUTER -> "Komputery"
+        EquipmentType.PROJECTOR -> "Projektor"
+        EquipmentType.WHITEBOARD -> "Tablica"
+    }
+}
 
 
+fun Int?.getFloorName(): String {
+    return when (this) {
+        1 -> "Parter"
+        2 -> "1. Piętro"
+        3 -> "2. Piętro"
+        null -> "Wszystkie"
+        else -> "Nie wybrano"
+    }
+}
+
+
+fun translateRecurringFrequency(frequency: RecurrenceFrequency?): String {
+    return when (frequency) {
+        RecurrenceFrequency.WEEKLY -> "Tygodniowo"
+        RecurrenceFrequency.BIWEEKLY -> "Co dwa tygodnie"
+        RecurrenceFrequency.MONTHLY -> "Miesięcznie"
+        else -> "Brak"
+    }
+}
+
+
+private fun getPreferredStartTime(state: MainUiState): LocalTime {
+    if (state.selectedTime != null) return state.selectedTime
+
+    val now = LocalTime.now()
+
+    // Jeśli godzina jest poza zakresem pracy (przed 8:00 lub po 21:00)
+    if (now.hour < 8 || now.hour >= 21) {
+        return LocalTime.of(8, 0)
+    }
+
+    // Jeśli godzina jest w trakcie pracy
+    return when (now.minute) {
+        in 0..19 -> LocalTime.of(now.hour + 1, 0)
+        in 20..40 -> LocalTime.of(now.hour + 1, 30)
+        else -> LocalTime.of(now.hour + 1, 45)
+    }
+}
+
+
+private fun getPreferredEndTime(startTime: LocalTime, state: MainUiState): LocalTime {
+    if (state.selectedEndTime != null) return state.selectedEndTime
+
+    // Dodaj jedną godzinę i zaokrąglij do najbliższych 30 minut
+    val endHour = startTime.hour + 1
+    val roundedMinute = when (startTime.minute) {
+        in 0..29 -> 30
+        in 30..44 -> 0
+        else -> 15
+    }
+
+    val end = startTime.plusMinutes(90)
+
+    // Jeśli godzina końcowa wykracza poza zakres pracy, zwróć maksymalny czas
+    return if (endHour >= 21) LocalTime.of(21, 0)
+    else end
+}

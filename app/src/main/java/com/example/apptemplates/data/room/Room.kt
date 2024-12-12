@@ -21,6 +21,8 @@ data class Lesson(
     val id: String = UUID.randomUUID().toString(),
     val roomId: String = "",
 
+    val name: String = "",
+    val userId: String = "",
 
     val day: DayOfWeek = DayOfWeek.MONDAY,
 

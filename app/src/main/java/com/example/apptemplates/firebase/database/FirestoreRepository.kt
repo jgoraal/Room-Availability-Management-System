@@ -149,5 +149,19 @@ object FirestoreRepository : FirestoreService {
 
     }
 
+    suspend fun fetchUsers(userIds: List<String>): FirestoreResult {
+        return try {
+            // Znajdź dokument użytkownika za pomocą zapytania na podstawie pola "email"
+            val querySnapshot = usersCollection.get().await()
+            if (!querySnapshot.isEmpty) {
+                val users = querySnapshot.toObjects(User::class.java)
+                FirestoreResult.SuccessWithResult(users)
+            } else {
 
+                FirestoreResult.Failure(Exception("Users not found"))
+            }
+        } catch (e: Exception) {
+            FirestoreResult.Failure(e)
+        }
+    }
 }

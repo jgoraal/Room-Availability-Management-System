@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Check
@@ -42,10 +43,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -70,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptemplates.presentation.main.reservation.components.CalendarView
 import com.example.apptemplates.presentation.main.reservation.components.getDaysInMonth
+import com.example.apptemplates.presentation.main.room_availability.objects.QuickReservation
 import com.example.apptemplates.presentation.main.temp.DarkThemeHeaderColors
 import com.example.apptemplates.presentation.main.temp.DarkThemeTimeLineColors
 import com.example.apptemplates.presentation.main.temp.LightThemeHeaderColors
@@ -78,7 +82,9 @@ import com.example.apptemplates.presentation.main.temp.MainUiState
 import com.example.apptemplates.presentation.main.temp.ThemeTimeLineColors
 import com.example.apptemplates.ui.theme.getContentBackGround
 import java.time.Instant
-import java.time.ZoneId
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
@@ -88,19 +94,21 @@ fun RoomAvailabilityView(
     state: MainUiState,
     viewModel: RoomAvailabilityViewModel,
     padding: PaddingValues = PaddingValues(0.dp),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navigateToReservation: () -> Unit
 ) {
-
     viewModel.canSeeRoomAvailability()
 
     val showFloorSelector = remember { mutableStateOf(false) }
     val showRoomSelector = remember { mutableStateOf(false) }
     val isDatePickerVisible = remember { mutableStateOf(false) }
     val isFloorSelectorVisible = remember { mutableStateOf(false) }
-    val selectedFloor = remember { mutableStateOf<String?>(null) }
-    val selectedRoom = remember { mutableStateOf<String?>(null) }
     val isRoomSelectorVisible = remember { mutableStateOf(false) }
     val isButtonVisible = remember { mutableStateOf(false) }
+
+    val selectedFloor = remember { mutableStateOf<String?>(null) }
+    val selectedRoom = remember { mutableStateOf<String?>(null) }
+
     val canSeeRoomAvailability = remember { mutableStateOf(viewModel.canSeeRoomAvailability()) }
 
     LazyColumn(
@@ -109,15 +117,16 @@ fun RoomAvailabilityView(
             .background(getContentBackGround())
             .padding(padding)
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(if (state.times.isNullOrEmpty()) 20.dp else 10.dp)
     ) {
 
 
         if (canSeeRoomAvailability.value) {
 
+
             // Header Title
             item {
-                AvailabilityHeader()
+                //AvailabilityHeader()
             }
 
 
@@ -137,6 +146,9 @@ fun RoomAvailabilityView(
                             viewModel = viewModel,
                             startFromSunday = false,
                             onDateChange = {
+                                if (!state.times.isNullOrEmpty()) {
+                                    viewModel.clearTimeSlots()
+                                }
                                 isDatePickerVisible.value = false
                                 showFloorSelector.value = true
                                 //selectedDate.value = "Wybrano datę ${state.selectedDate?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))}"
@@ -184,6 +196,10 @@ fun RoomAvailabilityView(
 
                                 DropdownMenuItem(
                                     onClick = {
+                                        if (!state.times.isNullOrEmpty()) {
+                                            viewModel.clearTimeSlots()
+                                        }
+
                                         viewModel.changeFloor(number)
                                         if (state.selectedFloorNumber != number) {
                                             viewModel.changeRoom(null)
@@ -266,80 +282,130 @@ fun RoomAvailabilityView(
                                 LazyColumn(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .heightIn(max = 250.dp) // Increased height for better usability
-                                        .padding(horizontal = 8.dp)
-                                        .background(
-                                            color = Color(0xFFF9F9F9), // Neutral background
-                                            shape = RoundedCornerShape(12.dp)
-                                        )
-                                        .border(1.dp, Color(0xFFB0BEC5), RoundedCornerShape(12.dp))
+                                        .heightIn(max = 350.dp)
+                                        .padding(horizontal = 8.dp, vertical = 8.dp)
                                 ) {
-                                    groupedRooms.forEach { (floor, rooms) ->
+                                    groupedRooms.onEachIndexed { index, entry ->
+                                        val (floor, rooms) = entry
                                         item {
-                                            // Floor Header
-                                            Box(
+                                            // Karta reprezentująca sekcję piętra
+                                            Card(
+                                                shape = RoundedCornerShape(12.dp),
+                                                elevation = CardDefaults.cardElevation(4.dp),
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .background(Color(0xFFF1F8E9)) // Light green background for headers
-                                                    .padding(vertical = 8.dp, horizontal = 12.dp),
-                                                contentAlignment = Alignment.CenterStart
-                                            ) {
-                                                Text(
-                                                    text = floor.getFloorName(),
-                                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = Color(0xFF2E7D32) // Deep green for header text
+                                                    .padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = Color(
+                                                        0xFFE3F2FD
                                                     )
-                                                )
-                                            }
-                                        }
-                                        items(rooms) { room ->
-                                            // Room Items
-                                            DropdownMenuItem(
-                                                onClick = {
-                                                    viewModel.changeRoom(room)
-                                                    isRoomSelectorVisible.value = false
-                                                    selectedRoom.value =
-                                                        "Wybrana sala: ${room.name.getRoomName()}"
-                                                    isButtonVisible.value = true
-                                                },
-                                                modifier = Modifier.padding(
-                                                    horizontal = 8.dp,
-                                                    vertical = 4.dp
-                                                ),
-                                                text = {
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                                        modifier = Modifier.fillMaxWidth()
-                                                    ) {
-                                                        Text(
-                                                            text = room.name.getRoomName(),
-                                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                                color = Color(0xFF37474F), // Dark gray for room names
-                                                                fontWeight = FontWeight.Normal
+                                                ) // Jasny niebieski
+                                            ) {
+                                                Column(
+                                                    modifier = Modifier.padding(12.dp)
+                                                ) {
+                                                    // Nagłówek piętra
+                                                    Text(
+                                                        text = floor.getFloorName(),
+                                                        style = MaterialTheme.typography.titleMedium.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Color(0xFF0D47A1) // Ciemny niebieski
+                                                        ),
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(bottom = 8.dp)
+                                                    )
+
+                                                    // Lista sal dla danego piętra
+                                                    rooms.forEachIndexed { roomIndex, room ->
+                                                        DropdownMenuItem(
+                                                            onClick = {
+                                                                if (!state.times.isNullOrEmpty()) {
+                                                                    viewModel.clearTimeSlots()
+                                                                }
+
+                                                                viewModel.changeRoom(room)
+                                                                isRoomSelectorVisible.value = false
+                                                                selectedRoom.value =
+                                                                    "Wybrana sala: ${room.name.getRoomName()}"
+                                                                isButtonVisible.value = true
+                                                            },
+                                                            modifier = Modifier
+                                                                .padding(
+                                                                    horizontal = 8.dp,
+                                                                    vertical = 4.dp
+                                                                ),
+                                                            text = {
+                                                                // Wiersz z nazwą sali oraz numerem piętra obok
+                                                                Row(
+                                                                    verticalAlignment = Alignment.CenterVertically,
+                                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                                    modifier = Modifier.fillMaxWidth()
+                                                                ) {
+                                                                    Text(
+                                                                        text = room.name.getRoomName(),
+                                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                                            color = Color(0xFF37474F),
+                                                                            fontWeight = FontWeight.SemiBold
+                                                                        )
+                                                                    )
+
+                                                                    // Mały "badge" z numerem piętra
+                                                                    Surface(
+                                                                        shape = RoundedCornerShape(8.dp),
+                                                                        color = Color(0xFFBBDEFB), // Jasny niebieski
+                                                                        modifier = Modifier.padding(
+                                                                            start = 8.dp
+                                                                        )
+                                                                    ) {
+                                                                        Text(
+                                                                            text = floor.getFloorName(),
+                                                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                                                color = Color(
+                                                                                    0xFF0D47A1
+                                                                                ),
+                                                                                fontWeight = FontWeight.Bold
+                                                                            ),
+                                                                            modifier = Modifier.padding(
+                                                                                horizontal = 8.dp,
+                                                                                vertical = 4.dp
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        )
+
+                                                        // Separator między salami
+                                                        if (roomIndex < rooms.size - 1) {
+                                                            Divider(
+                                                                color = Color(0xFFB0BEC5),
+                                                                thickness = 0.5.dp,
+                                                                modifier = Modifier.padding(
+                                                                    horizontal = 8.dp
+                                                                )
                                                             )
-                                                        )
-                                                        Icon(
-                                                            imageVector = Icons.Default.MeetingRoom,
-                                                            contentDescription = "Room Icon",
-                                                            tint = Color(0xFF757575), // Muted gray icon
-                                                            modifier = Modifier.size(20.dp)
-                                                        )
+                                                        }
                                                     }
                                                 }
-                                            )
+                                            }
+
+                                            // Separator między piętrami
+                                            if (index < groupedRooms.size - 1) {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                            }
                                         }
                                     }
                                 }
                             } else {
+                                // Gdy wybrano piętro, wyświetlamy tylko listę sal bez dodatkowych informacji i ikonek
                                 LazyColumn(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .heightIn(max = 250.dp)
-                                        .padding(horizontal = 8.dp)
+                                        .heightIn(max = 350.dp)
+                                        .padding(horizontal = 8.dp, vertical = 8.dp)
                                         .background(
-                                            color = Color(0xFFF9F9F9), // Neutral background
+                                            color = Color(0xFFF9F9F9),
                                             shape = RoundedCornerShape(12.dp)
                                         )
                                         .border(1.dp, Color(0xFFB0BEC5), RoundedCornerShape(12.dp))
@@ -347,16 +413,17 @@ fun RoomAvailabilityView(
                                     items(state.rooms) { room ->
                                         DropdownMenuItem(
                                             onClick = {
+                                                if (!state.times.isNullOrEmpty()) {
+                                                    viewModel.clearTimeSlots()
+                                                }
                                                 viewModel.changeRoom(room)
                                                 isRoomSelectorVisible.value = false
                                                 selectedRoom.value =
                                                     "Wybrana sala: ${room.name.getRoomName()}"
                                                 isButtonVisible.value = true
                                             },
-                                            modifier = Modifier.padding(
-                                                horizontal = 8.dp,
-                                                vertical = 4.dp
-                                            ),
+                                            modifier = Modifier
+                                                .padding(horizontal = 8.dp, vertical = 4.dp),
                                             text = {
                                                 Row(
                                                     verticalAlignment = Alignment.CenterVertically,
@@ -366,22 +433,42 @@ fun RoomAvailabilityView(
                                                     Text(
                                                         text = room.name.getRoomName(),
                                                         style = MaterialTheme.typography.bodyMedium.copy(
-                                                            color = Color(0xFF37474F), // Dark gray for room names
-                                                            fontWeight = FontWeight.Normal
+                                                            color = Color(0xFF37474F),
+                                                            fontWeight = FontWeight.SemiBold
                                                         )
                                                     )
-                                                    Icon(
-                                                        imageVector = Icons.Default.MeetingRoom,
-                                                        contentDescription = "Room Icon",
-                                                        tint = Color(0xFF757575), // Muted gray icon
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
+
+                                                    // "Badge" z numerem piętra (w przypadku, gdy znamy numer piętra)
+                                                    Surface(
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        color = Color(0xFFBBDEFB) // Jasny niebieski
+                                                    ) {
+                                                        Text(
+                                                            text = state.selectedFloorNumber?.getFloorName()
+                                                                .orEmpty(),
+                                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                                color = Color(0xFF0D47A1),
+                                                                fontWeight = FontWeight.Bold
+                                                            ),
+                                                            modifier = Modifier.padding(
+                                                                horizontal = 8.dp,
+                                                                vertical = 4.dp
+                                                            )
+                                                        )
+                                                    }
                                                 }
                                             }
+                                        )
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 8.dp),
+                                            thickness = 0.5.dp,
+                                            color = Color(0xFFB0BEC5)
                                         )
                                     }
                                 }
                             }
+
+
                         }
 
                     )
@@ -397,12 +484,12 @@ fun RoomAvailabilityView(
 
             // Timeline Section of Room Reservations
             item {
-                TimelineSection(state)
+                TimelineSection(state, navigateToReservation)
             }
         } else {
 
             item {
-                Box(
+                /*Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 12.dp)
@@ -427,10 +514,10 @@ fun RoomAvailabilityView(
                         ),
                         textAlign = TextAlign.Center
                     )
-                }
+                }*/
             }
 
-            items(2) {
+            items(3) {
                 Text("")
             }
 
@@ -795,7 +882,7 @@ fun TimelineSection(state: MainUiState) {
 }*/
 
 @Composable
-fun TimelineSection(state: MainUiState) {
+fun TimelineSection(state: MainUiState, navigateToReservation: () -> Unit) {
     val isDarkTheme = isSystemInDarkTheme()
     val colors: ThemeTimeLineColors =
         if (isDarkTheme) DarkThemeTimeLineColors else LightThemeTimeLineColors
@@ -803,7 +890,7 @@ fun TimelineSection(state: MainUiState) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(if (state.times != null) 400.dp else 280.dp)
+            .height(if (state.times != null) 600.dp else 280.dp)
             .padding(vertical = 16.dp)
             .background(
                 brush = Brush.verticalGradient(
@@ -844,7 +931,7 @@ fun TimelineSection(state: MainUiState) {
         ) {
             if (!state.times.isNullOrEmpty()) {
                 items(state.times) { time ->
-                    ReservationSlotCard(time)
+                    ReservationSlotCard(state, time, navigateToReservation)
                 }
             } else {
                 item {
@@ -857,54 +944,188 @@ fun TimelineSection(state: MainUiState) {
 
 
 @Composable
-fun ReservationSlotCard(time: Triple<Long, Long, Boolean>) {
+fun ReservationSlotCard(
+    state: MainUiState,
+    time: Triple<Long, Long, Boolean>,
+    onAvailableSlotClick: () -> Unit
+) {
     val start = formatTimeFromLong(time.first)
     val end = formatTimeFromLong(time.second)
     val isReserved = time.third
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .padding(horizontal = 4.dp)
-            .shadow(8.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isReserved) Color(0xFFFDEDEC) else Color(0xFFE8F5E9) // Delikatne odcienie różu i zieleni
-        ),
-        elevation = CardDefaults.cardElevation(8.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+
+    val userSlot = state.userBookedSlots?.find {
+        it.startTime < time.second && it.endTime > time.first
+    }
+
+    val lessonSlot = state.lessonBookedSlots?.find {
+        overlappingLessons(it.startTime, it.endTime, time.first, time.second)
+    }
+
+    val statusColor = if (isReserved) Color(0xFFC62828) else Color(0xFF2E7D32)
+    val backgroundColor = if (isReserved) Color(0xFFFDEDEC) else Color(0xFFE8F5E9)
+
+    // Zdefiniuj styl, aby spójnie używać odstępów
+    val shape = RoundedCornerShape(12.dp)
+
+    val cardModifier = Modifier
+        .fillMaxWidth()
+        .clip(shape)
+        .padding(horizontal = 8.dp, vertical = 6.dp)
+        .shadow(4.dp, shape)
+        .background(Color.White, shape) // Biały spód, a kolor stanu w pasku z lewej
+        .border(width = 2.dp, color = statusColor, shape = shape)
+        .then(if (!isReserved) Modifier.clickable {
+            QuickReservation.copy(state, TimeSlot(time.first, time.second))
+            onAvailableSlotClick()
+        } else Modifier)
+        .padding(16.dp) // Wewnętrzny odstęp
+
+    Column(modifier = cardModifier) {
+        // Górny wiersz z ikoną i statusem
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = if (isReserved) Icons.Default.EventBusy else Icons.Default.EventAvailable,
-                contentDescription = if (isReserved) "Zarezerwowane" else "Dostępne",
-                tint = if (isReserved) Color(0xFFC62828) else Color(0xFF2E7D32), // Przygaszone czerwone i zielone tony
-                modifier = Modifier.size(36.dp)
+                contentDescription = if (isReserved) "Zarezerwowana" else "Dostępna",
+                tint = statusColor,
+                modifier = Modifier.size(24.dp)
             )
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column {
-                Text(
-                    text = if (isReserved) "Zarezerwowane" else "Dostępne",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = if (isReserved) Color(0xFFC62828) else Color(0xFF2E7D32)
-                    )
+            Text(
+                text = if (isReserved) "Zarezerwowana" else "Dostępna",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = statusColor
                 )
-                Text(
-                    text = "$start - $end",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFF616161)),
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
+            )
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Wiersz z godzinami slotu
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.AccessTime,
+                contentDescription = "Czas",
+                tint = Color(0xFF616161),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "$start - $end",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFF424242))
+            )
+        }
+
+        // Jeśli jest userSlot, wyświetl informację o rezerwacji
+        if (userSlot != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Zarezerwowane przez: ${userSlot.username}",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Color(0xFF616161),
+                    fontWeight = FontWeight.Medium
+                )
+            )
+
+            Text(
+                text = "Kontakt: ${userSlot.email}",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Color(0xFF616161),
+                    fontWeight = FontWeight.Medium
+                )
+            )
+
+
+
+            Text(
+                text = "Czas rezerwacji: ${formatTimeFromLong(userSlot.startTime)} - ${
+                    formatTimeFromLong(
+                        userSlot.endTime
+                    )
+                }",
+                style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF616161))
+            )
+        }
+
+        if (lessonSlot != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Zajęcia: ${lessonSlot.lessonName}",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Color(0xFF616161),
+                    fontWeight = FontWeight.Medium
+                )
+            )
+
+            Text(
+                text = "Prowadzący: ${getTeacherName(lessonSlot.email)}",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Color(0xFF616161),
+                    fontWeight = FontWeight.Medium
+                )
+            )
+
+
+
+            Text(
+                text = "Czas: ${formatTimeFromLong(lessonSlot.startTime)} - ${
+                    formatTimeFromLong(
+                        lessonSlot.endTime
+                    )
+                }",
+                style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF616161))
+            )
+        }
+
     }
 }
+
+private fun overlappingLessons(
+    lessonStart: Long,
+    lessonEnd: Long,
+    slotStart: Long,
+    slotEnd: Long
+): Boolean {
+
+    val selectedDate = LocalDate.now()
+
+    // Konwersja milisekund na LocalTime
+    val lessonStartTime = Instant.ofEpochMilli(lessonStart).atZone(ZoneOffset.UTC).toLocalTime()
+    val lessonEndTime = Instant.ofEpochMilli(lessonEnd).atZone(ZoneOffset.UTC).toLocalTime()
+    val slotStartTime = Instant.ofEpochMilli(slotStart).atZone(ZoneOffset.UTC).toLocalTime()
+    val slotEndTime = Instant.ofEpochMilli(slotEnd).atZone(ZoneOffset.UTC).toLocalTime()
+
+    // Połączenie z wybraną datą
+    val lessonStartAdjusted = LocalDateTime.of(selectedDate, lessonStartTime).toEpochMilli()
+    val lessonEndAdjusted = LocalDateTime.of(selectedDate, lessonEndTime).toEpochMilli()
+    val slotStartAdjusted = LocalDateTime.of(selectedDate, slotStartTime).toEpochMilli()
+    val slotEndAdjusted = LocalDateTime.of(selectedDate, slotEndTime).toEpochMilli()
+
+    // Teraz sprawdzamy nachodzenie się znormalizowanych czasów
+    return lessonStartAdjusted < slotEndAdjusted && lessonEndAdjusted > slotStartAdjusted
+}
+
+// Funkcja pomocnicza do konwersji LocalDateTime na millis:
+private fun LocalDateTime.toEpochMilli(): Long {
+    return this.toInstant(ZoneOffset.UTC).toEpochMilli()
+}
+
+private fun getTeacherName(email: String): String {
+    if (email.substringAfter("@") == "gmail.com") return "Admin"
+
+
+    val emailTeacherNamePart = email.substringBefore("@")
+    val teacherName = emailTeacherNamePart.split(".")
+
+
+    return teacherName[0].replaceFirstChar { it.uppercase() } +
+            " " +
+            teacherName[1].replaceFirstChar { it.uppercase() }
+}
+
 
 @Composable
 fun NoAvailableMessage() {
@@ -933,7 +1154,7 @@ fun NoAvailableMessage() {
 fun formatTimeFromLong(timestamp: Long): String {
     val formatter = DateTimeFormatter.ofPattern("HH:mm")
     return Instant.ofEpochMilli(timestamp)
-        .atZone(ZoneId.systemDefault())
+        .atZone(ZoneOffset.UTC)
         .format(formatter)
 }
 
@@ -941,7 +1162,7 @@ fun formatTimeFromLong(timestamp: Long): String {
 @Preview(showBackground = true)
 @Composable
 private fun Avail() {
-    RoomAvailabilityView(MainUiState(), RoomAvailabilityViewModel())
+    RoomAvailabilityView(MainUiState(), RoomAvailabilityViewModel(), navigateToReservation = {})
 }
 
 @Composable
