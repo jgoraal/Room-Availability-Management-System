@@ -367,7 +367,8 @@ class ReservationViewModel(
                     showTimePicker = true,
                     showRecurringPicker = true,
                     showAttendeesPicker = true,
-                    showOtherFiltersPicker = true
+                    showOtherFiltersPicker = true,
+                    availableRooms = if (QuickReservation.getSelectedRoom() != null) listOf(QuickReservation.getSelectedRoom()!!) else emptyList()
                 )
             }
         }

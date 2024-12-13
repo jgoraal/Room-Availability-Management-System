@@ -118,7 +118,6 @@ fun RoomAvailabilityView(
         verticalArrangement = Arrangement.spacedBy(if (state.times.isNullOrEmpty()) 20.dp else 10.dp)
     ) {
 
-
         if (canSeeRoomAvailability.value) {
 
 
@@ -146,7 +145,7 @@ fun RoomAvailabilityView(
                                 }
                                 isDatePickerVisible.value = false
                                 viewModel.updateShowFloorSelector(true)
-                                //selectedDate.value = "Wybrano datę ${state.selectedDate?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))}"
+                                viewModel.saveState()
                             }
                         )
                     }
@@ -207,6 +206,8 @@ fun RoomAvailabilityView(
                                         viewModel.fetchRooms()
                                         isFloorSelectorVisible.value = false
                                         viewModel.updateShowRoomSelector(true)
+
+                                        viewModel.saveState()
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -325,6 +326,7 @@ fun RoomAvailabilityView(
                                                                 viewModel.changeRoom(room)
                                                                 isRoomSelectorVisible.value = false
                                                                 viewModel.updateShowButton(true)
+                                                                viewModel.saveState()
                                                             },
                                                             modifier = Modifier.highlightIfSelected(
                                                                 isSelectedRoom,
@@ -367,12 +369,12 @@ fun RoomAvailabilityView(
                                                         )
 
                                                         if (roomIndex < rooms.size - 1) {
-                                                            Divider(
-                                                                color = compColors.dividerColor,
-                                                                thickness = 0.5.dp,
+                                                            HorizontalDivider(
                                                                 modifier = Modifier.padding(
                                                                     horizontal = 8.dp
-                                                                )
+                                                                ),
+                                                                thickness = 0.5.dp,
+                                                                color = compColors.dividerColor
                                                             )
                                                         }
 
@@ -413,6 +415,7 @@ fun RoomAvailabilityView(
                                                 viewModel.changeRoom(room)
                                                 isRoomSelectorVisible.value = false
                                                 viewModel.updateShowButton(true)
+                                                viewModel.saveState()
                                             },
                                             modifier = Modifier.highlightIfSelected(
                                                 isSelectedRoom,

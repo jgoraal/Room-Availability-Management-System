@@ -26,11 +26,17 @@ class RoomAvailabilityViewModel(
 
     private val savedScreenState = StateLoader.stateAvailabilityScreen
 
+    fun saveState() {
+        StateLoader.updateAvailAbilityScreenState(_state.value)
+    }
+
     init {
         if (savedScreenState.value != null) {
             _state.value = savedScreenState.value!!
         }
     }
+
+
 
 
     fun fetchRooms() {
@@ -415,6 +421,8 @@ class RoomAvailabilityViewModel(
         _state.update {
             it.copy(screenState = ScreenState.Success, times = times)
         }
+
+        saveState()
     }
 
     private fun updateUserReservationTime(userReservationTime: List<UserBookedSlot>) {

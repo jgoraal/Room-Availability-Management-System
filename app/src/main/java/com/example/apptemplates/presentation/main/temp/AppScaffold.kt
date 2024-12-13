@@ -77,6 +77,7 @@ import com.example.apptemplates.presentation.main.room_availability.LessonBooked
 import com.example.apptemplates.presentation.main.room_availability.RoomAvailabilityView
 import com.example.apptemplates.presentation.main.room_availability.RoomAvailabilityViewModel
 import com.example.apptemplates.presentation.main.room_availability.UserBookedSlot
+import com.example.apptemplates.presentation.main.room_availability.objects.QuickReservation
 import com.example.apptemplates.presentation.main.settings.SettingsScreen
 import com.example.apptemplates.presentation.main.settings.SettingsViewModel
 import kotlinx.coroutines.launch
@@ -353,6 +354,8 @@ private fun NavGraphBuilder.reservationScreen(
                 }
 
                 StateLoader.clearReservationScreenState()
+                QuickReservation.clear()
+                StateLoader.clearAvailabilityScreenState()
             }
         )
     }

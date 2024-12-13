@@ -1,5 +1,6 @@
 package com.example.apptemplates.presentation.main.room_availability.objects
 
+import com.example.apptemplates.data.room.Room
 import com.example.apptemplates.presentation.main.room_availability.TimeSlot
 import com.example.apptemplates.presentation.main.temp.MainUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +15,7 @@ object QuickReservation {
     private val selectedDate = MutableStateFlow<LocalDate?>(null)
     private val startTime = MutableStateFlow<LocalTime?>(null)
     private val endTime = MutableStateFlow<LocalTime?>(null)
+    private val selectedRoom = MutableStateFlow<Room?>(null)
 
 
     fun copy(state: MainUiState, timeSlot: TimeSlot) {
@@ -24,6 +26,7 @@ object QuickReservation {
         endTime.value =
             LocalDateTime.ofInstant(Instant.ofEpochMilli(timeSlot.endTime), ZoneOffset.UTC)
                 .toLocalTime()
+        selectedRoom.value = state.selectedRoom
     }
 
 
@@ -43,6 +46,10 @@ object QuickReservation {
 
     fun getEndTime(): LocalTime? {
         return endTime.value
+    }
+
+    fun getSelectedRoom(): Room? {
+        return selectedRoom.value
     }
 
 }
