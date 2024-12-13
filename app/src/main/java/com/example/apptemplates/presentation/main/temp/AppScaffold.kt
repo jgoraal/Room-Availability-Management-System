@@ -196,7 +196,6 @@ data class MainUiState(
     val isRecurring: Boolean = false, // Czy jest cykliczna
     val recurringFrequency: RecurrenceFrequency? = null, // Rodzaj cykliczonosci
     val endRecurrenceDate: LocalDate? = null,   // Zakonczenie cyklu
-    //val formattedEndDate: String? = null,
     val duration: Int = 1,
 
     val selectedFloor: Int? = null, // Wybrany piętro
@@ -207,6 +206,11 @@ data class MainUiState(
     val availableRooms: List<Room> = emptyList(),
 
     val selectedRoomToReserve: Room? = null,
+
+    val showTimePicker: Boolean = false,
+    val showAttendeesPicker: Boolean = false,
+    val showRecurringPicker: Boolean = false,
+    val showOtherFiltersPicker: Boolean = false,
 
     // PROFILE
     val username: String = ActiveUser.getUser()?.username ?: "Nieznajomy",
@@ -224,7 +228,7 @@ data class MainUiState(
     val isRoomSelectorVisible: Boolean = false,
     val isButtonVisible: Boolean = false,
 
-    val selectedFloorName: String = "Parter",
+    val selectedFloorName: String? = null,
     val selectedRoomNumber: String = "",
     val selectedFloorNumber: Int? = null,
     val selectedDateCheck: LocalDate = LocalDate.now(),

@@ -443,6 +443,34 @@ class ReservationViewModel(
     }
 
 
+    fun updateShowTimePicker(value: Boolean) {
+        _state.update { it.copy(showTimePicker = value) }
+    }
+
+    fun updateShowAttendeesPicker(value: Boolean) {
+        _state.update { it.copy(showAttendeesPicker = value) }
+    }
+
+    fun updateShowRecurringPicker(value: Boolean) {
+        _state.update { it.copy(showRecurringPicker = value) }
+    }
+
+    fun updateShowOtherFiltersPicker(value: Boolean) {
+        _state.update { it.copy(showOtherFiltersPicker = value) }
+    }
+
+    fun updateVisibility(value: Boolean) {
+        _state.update {
+            it.copy(
+                showTimePicker = value,
+                showAttendeesPicker = value,
+                showRecurringPicker = value,
+                showOtherFiltersPicker = value
+            )
+        }
+    }
+
+
 }
 
 

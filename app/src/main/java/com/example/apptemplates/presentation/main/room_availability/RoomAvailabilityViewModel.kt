@@ -424,6 +424,32 @@ class RoomAvailabilityViewModel(
         }
     }
 
+    fun updateShowFloorSelector(show: Boolean) {
+        _state.update {
+            it.copy(showFloorSelector = show)
+        }
+    }
+
+    fun updateShowRoomSelector(show: Boolean) {
+        _state.update {
+            it.copy(showRoomSelector = show)
+        }
+    }
+
+    fun updateShowButton(show: Boolean) {
+        _state.update {
+            it.copy(isButtonVisible = show)
+        }
+    }
+
+    fun updateSelectedFloor(floor: String?) {
+        _state.update {
+            it.copy(selectedFloorName = floor)
+        }
+    }
+
+
+
     fun clearTimeSlots() {
         _state.update {
             it.copy(times = emptyList())

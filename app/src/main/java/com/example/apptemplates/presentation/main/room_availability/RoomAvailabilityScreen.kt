@@ -71,14 +71,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.apptemplates.data.room.Room
 import com.example.apptemplates.presentation.main.reservation.components.CalendarView
 import com.example.apptemplates.presentation.main.reservation.components.getDaysInMonth
 import com.example.apptemplates.presentation.main.room_availability.objects.QuickReservation
+import com.example.apptemplates.presentation.main.temp.DarkThemeComponentsColors
 import com.example.apptemplates.presentation.main.temp.DarkThemeHeaderColors
 import com.example.apptemplates.presentation.main.temp.DarkThemeTimeLineColors
+import com.example.apptemplates.presentation.main.temp.LightThemeComponentsColors
 import com.example.apptemplates.presentation.main.temp.LightThemeHeaderColors
 import com.example.apptemplates.presentation.main.temp.LightThemeTimeLineColors
 import com.example.apptemplates.presentation.main.temp.MainUiState
+import com.example.apptemplates.presentation.main.temp.ThemeComponentColors
 import com.example.apptemplates.presentation.main.temp.ThemeTimeLineColors
 import com.example.apptemplates.ui.theme.getContentBackGround
 import java.time.Instant
@@ -99,15 +103,9 @@ fun RoomAvailabilityView(
 ) {
     viewModel.canSeeRoomAvailability()
 
-    val showFloorSelector = remember { mutableStateOf(false) }
-    val showRoomSelector = remember { mutableStateOf(false) }
     val isDatePickerVisible = remember { mutableStateOf(false) }
     val isFloorSelectorVisible = remember { mutableStateOf(false) }
     val isRoomSelectorVisible = remember { mutableStateOf(false) }
-    val isButtonVisible = remember { mutableStateOf(false) }
-
-    val selectedFloor = remember { mutableStateOf<String?>(null) }
-    val selectedRoom = remember { mutableStateOf<String?>(null) }
 
     val canSeeRoomAvailability = remember { mutableStateOf(viewModel.canSeeRoomAvailability()) }
 
@@ -135,11 +133,8 @@ fun RoomAvailabilityView(
 
                 TopDownElement(
                     visible = isDatePickerVisible,
-                    title = if (state.selectedDate != null) {
-                        "Wybrana data ${state.selectedDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))}"
-                    } else {
-                        "Wybierz datę"
-                    },
+                    title = state.selectedDate?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+                        ?.let { "Wybrana data $it" } ?: "Wybierz datę",
                     imageVector = Icons.Default.Event,
                     content = {
                         DatePicker(
@@ -150,7 +145,7 @@ fun RoomAvailabilityView(
                                     viewModel.clearTimeSlots()
                                 }
                                 isDatePickerVisible.value = false
-                                showFloorSelector.value = true
+                                viewModel.updateShowFloorSelector(true)
                                 //selectedDate.value = "Wybrano datę ${state.selectedDate?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))}"
                             }
                         )
@@ -159,23 +154,24 @@ fun RoomAvailabilityView(
             }
 
             // Floor Selector using TopDownElement
-            if (showFloorSelector.value) {
+            if (state.showFloorSelector) {
                 item {
 
                     TopDownElement(
                         visible = isFloorSelectorVisible,
-                        title = selectedFloor.value ?: "Wybierz piętro",
+                        title = state.selectedFloorName.getFloorName(),
                         imageVector = Icons.Default.Domain,
                         content = {
                             val floors = listOf(
                                 "Parter" to 1,
-                                "1. Piętro" to 2,
-                                "2. Piętro" to 3,
+                                "I Piętro" to 2,
+                                "II Piętro" to 3,
                                 "Wszystkie" to null
                             )
 
                             floors.forEach { (floor, number) ->
-                                val isSelected = selectedFloor.value?.contains(floor) == true
+                                val isSelected =
+                                    state.selectedFloorName?.contentEquals(floor) == true
                                 val isDarkTheme = isSystemInDarkTheme()
 
                                 // Definiowanie kolorów zależnie od motywu i stanu zaznaczenia
@@ -203,12 +199,14 @@ fun RoomAvailabilityView(
                                         viewModel.changeFloor(number)
                                         if (state.selectedFloorNumber != number) {
                                             viewModel.changeRoom(null)
-                                            selectedRoom.value = null
+                                            //selectedRoom.value = null
                                         }
-                                        selectedFloor.value = "Wybrane piętro: $floor"
+
+                                        viewModel.updateSelectedFloor(floor)
+                                        //selectedFloor.value = "Wybrane piętro: $floor"
                                         viewModel.fetchRooms()
                                         isFloorSelectorVisible.value = false
-                                        showRoomSelector.value = true
+                                        viewModel.updateShowRoomSelector(true)
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -269,14 +267,19 @@ fun RoomAvailabilityView(
 
 
             // Room Selector using TopDownElement
-            if (showRoomSelector.value) {
+            if (state.showRoomSelector) {
                 item {
                     TopDownElement(
                         visible = isRoomSelectorVisible,
-                        title = selectedRoom.value ?: "Wybierz salę",
+                        title = state.selectedRoom.getRoomName(),
                         imageVector = Icons.Default.MeetingRoom,
                         content = {
+
+                            val compColors =
+                                if (isSystemInDarkTheme()) DarkThemeComponentsColors else LightThemeComponentsColors
+
                             if (state.selectedFloorNumber == null) {
+                                // Grupowanie sal po piętrach
                                 val groupedRooms = state.rooms.groupBy { it.floor }
 
                                 LazyColumn(
@@ -288,7 +291,6 @@ fun RoomAvailabilityView(
                                     groupedRooms.onEachIndexed { index, entry ->
                                         val (floor, rooms) = entry
                                         item {
-                                            // Karta reprezentująca sekcję piętra
                                             Card(
                                                 shape = RoundedCornerShape(12.dp),
                                                 elevation = CardDefaults.cardElevation(4.dp),
@@ -296,28 +298,24 @@ fun RoomAvailabilityView(
                                                     .fillMaxWidth()
                                                     .padding(vertical = 4.dp),
                                                 colors = CardDefaults.cardColors(
-                                                    containerColor = Color(
-                                                        0xFFE3F2FD
-                                                    )
-                                                ) // Jasny niebieski
+                                                    containerColor = compColors.cardBackground
+                                                )
                                             ) {
-                                                Column(
-                                                    modifier = Modifier.padding(12.dp)
-                                                ) {
-                                                    // Nagłówek piętra
+                                                Column(modifier = Modifier.padding(12.dp)) {
                                                     Text(
                                                         text = floor.getFloorName(),
                                                         style = MaterialTheme.typography.titleMedium.copy(
                                                             fontWeight = FontWeight.Bold,
-                                                            color = Color(0xFF0D47A1) // Ciemny niebieski
+                                                            color = compColors.primaryText
                                                         ),
                                                         modifier = Modifier
                                                             .fillMaxWidth()
                                                             .padding(bottom = 8.dp)
                                                     )
 
-                                                    // Lista sal dla danego piętra
                                                     rooms.forEachIndexed { roomIndex, room ->
+                                                        val isSelectedRoom =
+                                                            (state.selectedRoom == room)
                                                         DropdownMenuItem(
                                                             onClick = {
                                                                 if (!state.times.isNullOrEmpty()) {
@@ -326,17 +324,13 @@ fun RoomAvailabilityView(
 
                                                                 viewModel.changeRoom(room)
                                                                 isRoomSelectorVisible.value = false
-                                                                selectedRoom.value =
-                                                                    "Wybrana sala: ${room.name.getRoomName()}"
-                                                                isButtonVisible.value = true
+                                                                viewModel.updateShowButton(true)
                                                             },
-                                                            modifier = Modifier
-                                                                .padding(
-                                                                    horizontal = 8.dp,
-                                                                    vertical = 4.dp
-                                                                ),
+                                                            modifier = Modifier.highlightIfSelected(
+                                                                isSelectedRoom,
+                                                                compColors
+                                                            ),
                                                             text = {
-                                                                // Wiersz z nazwą sali oraz numerem piętra obok
                                                                 Row(
                                                                     verticalAlignment = Alignment.CenterVertically,
                                                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -345,25 +339,21 @@ fun RoomAvailabilityView(
                                                                     Text(
                                                                         text = room.name.getRoomName(),
                                                                         style = MaterialTheme.typography.bodyMedium.copy(
-                                                                            color = Color(0xFF37474F),
+                                                                            color = if (isSelectedRoom) compColors.primaryText else compColors.secondaryText,
                                                                             fontWeight = FontWeight.SemiBold
                                                                         )
                                                                     )
 
-                                                                    // Mały "badge" z numerem piętra
                                                                     Surface(
                                                                         shape = RoundedCornerShape(8.dp),
-                                                                        color = Color(0xFFBBDEFB), // Jasny niebieski
-                                                                        modifier = Modifier.padding(
-                                                                            start = 8.dp
+                                                                        color = compColors.accentColor.copy(
+                                                                            alpha = 0.2f
                                                                         )
                                                                     ) {
                                                                         Text(
                                                                             text = floor.getFloorName(),
                                                                             style = MaterialTheme.typography.bodySmall.copy(
-                                                                                color = Color(
-                                                                                    0xFF0D47A1
-                                                                                ),
+                                                                                color = compColors.accentColor,
                                                                                 fontWeight = FontWeight.Bold
                                                                             ),
                                                                             modifier = Modifier.padding(
@@ -376,21 +366,20 @@ fun RoomAvailabilityView(
                                                             }
                                                         )
 
-                                                        // Separator między salami
                                                         if (roomIndex < rooms.size - 1) {
                                                             Divider(
-                                                                color = Color(0xFFB0BEC5),
+                                                                color = compColors.dividerColor,
                                                                 thickness = 0.5.dp,
                                                                 modifier = Modifier.padding(
                                                                     horizontal = 8.dp
                                                                 )
                                                             )
                                                         }
+
                                                     }
                                                 }
                                             }
 
-                                            // Separator między piętrami
                                             if (index < groupedRooms.size - 1) {
                                                 Spacer(modifier = Modifier.height(8.dp))
                                             }
@@ -398,19 +387,24 @@ fun RoomAvailabilityView(
                                     }
                                 }
                             } else {
-                                // Gdy wybrano piętro, wyświetlamy tylko listę sal bez dodatkowych informacji i ikonek
+                                // Jeśli piętro jest wybrane, wyświetlamy prościej
                                 LazyColumn(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .heightIn(max = 350.dp)
                                         .padding(horizontal = 8.dp, vertical = 8.dp)
                                         .background(
-                                            color = Color(0xFFF9F9F9),
+                                            color = compColors.cardBackground.copy(alpha = 0.05f),
                                             shape = RoundedCornerShape(12.dp)
                                         )
-                                        .border(1.dp, Color(0xFFB0BEC5), RoundedCornerShape(12.dp))
+                                        .border(
+                                            1.dp,
+                                            compColors.dividerColor,
+                                            RoundedCornerShape(12.dp)
+                                        )
                                 ) {
                                     items(state.rooms) { room ->
+                                        val isSelectedRoom = (state.selectedRoom == room)
                                         DropdownMenuItem(
                                             onClick = {
                                                 if (!state.times.isNullOrEmpty()) {
@@ -418,12 +412,12 @@ fun RoomAvailabilityView(
                                                 }
                                                 viewModel.changeRoom(room)
                                                 isRoomSelectorVisible.value = false
-                                                selectedRoom.value =
-                                                    "Wybrana sala: ${room.name.getRoomName()}"
-                                                isButtonVisible.value = true
+                                                viewModel.updateShowButton(true)
                                             },
-                                            modifier = Modifier
-                                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                            modifier = Modifier.highlightIfSelected(
+                                                isSelectedRoom,
+                                                compColors
+                                            ),
                                             text = {
                                                 Row(
                                                     verticalAlignment = Alignment.CenterVertically,
@@ -433,21 +427,20 @@ fun RoomAvailabilityView(
                                                     Text(
                                                         text = room.name.getRoomName(),
                                                         style = MaterialTheme.typography.bodyMedium.copy(
-                                                            color = Color(0xFF37474F),
+                                                            color = if (isSelectedRoom) compColors.primaryText else compColors.secondaryText,
                                                             fontWeight = FontWeight.SemiBold
                                                         )
                                                     )
 
-                                                    // "Badge" z numerem piętra (w przypadku, gdy znamy numer piętra)
                                                     Surface(
                                                         shape = RoundedCornerShape(8.dp),
-                                                        color = Color(0xFFBBDEFB) // Jasny niebieski
+                                                        color = compColors.accentColor.copy(alpha = 0.2f)
                                                     ) {
                                                         Text(
                                                             text = state.selectedFloorNumber?.getFloorName()
                                                                 .orEmpty(),
                                                             style = MaterialTheme.typography.bodySmall.copy(
-                                                                color = Color(0xFF0D47A1),
+                                                                color = compColors.accentColor,
                                                                 fontWeight = FontWeight.Bold
                                                             ),
                                                             modifier = Modifier.padding(
@@ -462,20 +455,18 @@ fun RoomAvailabilityView(
                                         HorizontalDivider(
                                             modifier = Modifier.padding(horizontal = 8.dp),
                                             thickness = 0.5.dp,
-                                            color = Color(0xFFB0BEC5)
+                                            color = compColors.dividerColor
                                         )
                                     }
                                 }
                             }
-
-
                         }
 
                     )
                 }
             }
 
-            if (isButtonVisible.value && state.selectedRoom != null) {
+            if (state.isButtonVisible && state.selectedRoom != null) {
                 item {
                     CheckButton(viewModel)
                 }
@@ -532,6 +523,29 @@ fun RoomAvailabilityView(
     }
 }
 
+@Composable
+fun Modifier.highlightIfSelected(isSelected: Boolean, compColors: ThemeComponentColors): Modifier {
+    return this
+        .background(
+            color = if (isSelected) compColors.accentColor.copy(alpha = 0.2f) else Color.Transparent,
+            shape = RoundedCornerShape(8.dp)
+        )
+        .border(
+            width = if (isSelected) 1.dp else 0.dp,
+            color = if (isSelected) compColors.dividerColor else Color.Transparent,
+            shape = RoundedCornerShape(8.dp)
+        )
+        .padding(horizontal = 8.dp, vertical = 8.dp)
+}
+
+private fun String?.getFloorName(): String {
+    return when (this) {
+        null -> "Wybierz piętro"
+        "Wszystkie" -> "Wybrano Wszystkie Piętra"
+        else -> "Wybrano $this"
+    }
+}
+
 private fun Int.getFloorName(): String {
     return when (this) {
         1 -> "Parter"
@@ -543,6 +557,13 @@ private fun Int.getFloorName(): String {
 
 private fun String.getRoomName(): String {
     return "Sala " + this.split(" ").last()
+}
+
+private fun Room?.getRoomName(): String {
+    return when (this) {
+        null -> "Wybierz salę"
+        else -> "Wybrano Salę " + this.name.split(" ").last()
+    }
 }
 
 @Composable

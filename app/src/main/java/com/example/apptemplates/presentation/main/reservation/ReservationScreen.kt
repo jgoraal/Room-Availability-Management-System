@@ -88,12 +88,10 @@ fun ReservationView(
 
     viewModel.checkIfQuickReservationIsReady()
 
+    if (QuickReservation.getStartTime() != null) {
+        viewModel.updateVisibility(true)
+    }
 
-    val showTimePicker = remember { mutableStateOf(QuickReservation.getStartTime() != null) }
-    val showAttendeesPicker = remember { mutableStateOf(QuickReservation.getStartTime() != null) }
-    val showRecurringPicker = remember { mutableStateOf(QuickReservation.getStartTime() != null) }
-    val showOtherFiltersPicker =
-        remember { mutableStateOf(QuickReservation.getStartTime() != null) }
 
     // Main LazyColumn for the form elements, excluding the room list
     LazyColumn(
@@ -114,7 +112,8 @@ fun ReservationView(
                 if (state.endRecurrenceDate != null) {
                     viewModel.updateEndRecurrenceDate()
                 }
-                showTimePicker.value = true
+
+                viewModel.updateShowTimePicker(true)
 
                 if (state.availableRooms.isNotEmpty()) {
                     viewModel.clearAvailableRooms()
@@ -123,12 +122,12 @@ fun ReservationView(
             }
         }
 
-        if (showTimePicker.value) {
+        if (state.showTimePicker) {
             item {
                 TimePickerInTopDown(state, viewModel) {
-                    showRecurringPicker.value = true
-                    showAttendeesPicker.value = true
-                    showOtherFiltersPicker.value = true
+                    viewModel.updateShowRecurringPicker(true)
+                    viewModel.updateShowAttendeesPicker(true)
+                    viewModel.updateShowOtherFiltersPicker(true)
 
                     if (state.availableRooms.isNotEmpty()) {
                         viewModel.clearAvailableRooms()
@@ -137,44 +136,43 @@ fun ReservationView(
             }
         }
 
-        if (showRecurringPicker.value && viewModel.canUserMakeRecurringReservation()) {
+        if (state.showRecurringPicker && viewModel.canUserMakeRecurringReservation()) {
             item { CalendarEndDatePicker(viewModel = viewModel, state = state) }
         }
 
-        if (showAttendeesPicker.value) {
+        if (state.showAttendeesPicker) {
             item {
                 NumberOfAttendeesSelector(viewModel, state) {
                     if (state.availableRooms.isNotEmpty()) {
                         viewModel.clearAvailableRooms()
                     }
 
-
-                    showRecurringPicker.value = true
-                    showOtherFiltersPicker.value = true
+                    viewModel.updateShowRecurringPicker(true)
+                    viewModel.updateShowOtherFiltersPicker(true)
                 }
             }
         }
 
-        if (showOtherFiltersPicker.value) {
+        if (state.showOtherFiltersPicker) {
             item { AdditionalFiltersPicker(viewModel, state) }
         }
 
 
         item { HorizontalDivider() }
-        if (showTimePicker.value) {
+        if (state.showTimePicker) {
             item {
                 SelectedData(
                     viewModel,
                     state,
-                    showTimePicker.value,
-                    showAttendeesPicker.value,
-                    showRecurringPicker.value,
-                    showOtherFiltersPicker.value
+                    state.showTimePicker,
+                    state.showAttendeesPicker,
+                    state.showRecurringPicker,
+                    state.showOtherFiltersPicker
                 )
             }
         }
 
-        if (showAttendeesPicker.value) {
+        if (state.showAttendeesPicker) {
             item {
                 FindAvailableRoomsButton(viewModel, isSystemInDarkTheme())
             }
