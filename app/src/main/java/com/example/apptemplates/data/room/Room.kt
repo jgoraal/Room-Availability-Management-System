@@ -9,6 +9,7 @@ data class Room(
     val id: String = UUID.randomUUID().toString(),
 
     val name: String = "",
+    val contactEmail: String = "",
     val floor: Int = 1,
     val capacity: Int = 1,
 

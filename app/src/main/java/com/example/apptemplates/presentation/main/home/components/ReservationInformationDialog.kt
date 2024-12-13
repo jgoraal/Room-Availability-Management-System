@@ -2,6 +2,7 @@ package com.example.apptemplates.presentation.main.home.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,18 +20,24 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MeetingRoom
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +63,11 @@ import com.example.apptemplates.data.room.Room
 import com.example.apptemplates.presentation.main.home.ActiveRooms
 import com.example.apptemplates.presentation.main.home.HomeViewModel
 import com.example.apptemplates.presentation.main.home.getUpcomingDate
+import com.example.apptemplates.presentation.main.reservation.components.adjustRoomName
+import com.example.apptemplates.presentation.main.reservation.getFloorName
 import com.example.apptemplates.presentation.main.reservation.getNameInPolish
+import com.example.apptemplates.presentation.main.temp.DarkThemeReservationColors
+import com.example.apptemplates.presentation.main.temp.LightThemeReservationColors
 import com.example.apptemplates.presentation.main.temp.MainUiState
 import java.time.DayOfWeek
 import java.time.Instant
@@ -69,23 +82,24 @@ fun ReservationDetailsDialog(
     viewModel: HomeViewModel,
     onDismiss: () -> Unit
 ) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val colors = if (isDarkTheme) DarkThemeReservationColors else LightThemeReservationColors
 
     val showConfirmReservationCancel = remember { mutableStateOf(false) }
     val showRequestAdditionalEquipment = remember { mutableStateOf(false) }
-
 
     if (state.showReservationDetailsDialog && state.selectedReservation != null) {
         val reservation = state.selectedReservation
 
         AlertDialog(
-            onDismissRequest = { onDismiss() },
+            onDismissRequest = onDismiss,
             title = {
                 Text(
                     text = "Szczegóły Rezerwacji",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        color = Color(0xFF4E342E) // Rich brown for the title
+                        color = colors.primaryText
                     )
                 )
             },
@@ -94,338 +108,248 @@ fun ReservationDetailsDialog(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        //.padding(8.dp)
                         .background(
-                            color = Color(0xFFFFFBF2), // Warm soft background
+                            color = colors.cardBackground,
                             shape = RoundedCornerShape(16.dp)
                         )
-                        .padding(8.dp)
+                        .padding(16.dp)
                 ) {
-                    // Room Name with Icon and Modern Styling
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    // 1. Sekcja Sala
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = colors.accentColor.copy(alpha = 0.15f),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp)
-                            .background(
-                                color = Color(0xFFFDE9E0), // Subtle beige background
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(12.dp)
+                            .padding(vertical = 4.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.MeetingRoom,
-                            contentDescription = "Sala",
-                            tint = Color(0xFF6D4C41), // Warm brown for the icon
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = reservation.roomId.getRoomName(),
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF4E342E) // Dark brown for room name
-                            )
-                        )
-                    }
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp), // Add spacing between items
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                color = Color(0xFFFFECB3), // Soft pastel yellow for the unified container
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(
-                                horizontal = 16.dp,
-                                vertical = 12.dp
-                            ) // Padding for better content alignment
-                    ) {
-                        // Reservation Date
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(12.dp)
+                        ) {
                             Icon(
-                                imageVector = Icons.Default.Event, // Calendar icon for date
-                                contentDescription = "Data",
-                                tint = Color(0xFF5D4037), // Warm brown for the icon
+                                imageVector = Icons.Default.MeetingRoom,
+                                contentDescription = "Sala",
+                                tint = colors.iconColor,
                                 modifier = Modifier.size(24.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = reservation.getDate(),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 16.sp,
+                                text = reservation.roomId.getRoomName(),
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF5D4037) // Warm brown for text
-                                )
-                            )
-                        }
-
-                        // Reservation Time
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Schedule, // Clock icon for time
-                                contentDescription = "Godzina",
-                                tint = Color(0xFF5D4037), // Warm brown for the icon
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = (reservation.startTime to reservation.endTime).getPolishedTime(),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF5D4037) // Warm brown for text
+                                    color = colors.primaryText
                                 )
                             )
                         }
                     }
 
-
-                    // Equipment Details Section
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    // 2. Sekcja Data i Godzina
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = colors.backgroundGradient.last().copy(alpha = 0.15f),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                color = Color(0xFFF3F9D2), // Soft pastel green for a gentle background
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .padding(vertical = 4.dp)
                     ) {
-                        // Section Title
-                        Text(
-                            text = "Wyposażenie",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF5D4037) // Warm brown for title
-                            ),
-                            modifier = Modifier.padding(bottom = 8.dp) // Space below title
-                        )
-
-                        // Equipment List
-                        val equipmentList = reservation.roomId.getEquipment()
-                        if (equipmentList.isEmpty()) {
-                            // Display message if no equipment is available
-                            Text(
-                                text = "Brak dodatkowego wyposażenia",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF757575) // Muted gray for a subtle look
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                        ) {
+                            // Data
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Event,
+                                    contentDescription = "Data",
+                                    tint = colors.iconColor,
+                                    modifier = Modifier.size(20.dp)
                                 )
-                            )
-                        } else {
-                            // Display each equipment with its icon and name
-                            equipmentList.forEach { equipment ->
-                                val (name, icon) = equipment.getPairComponents()
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = icon,
-                                        contentDescription = name,
-                                        tint = Color(0xFF5D4037), // Warm brown for the icon
-                                        modifier = Modifier.size(24.dp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = reservation.getDate(),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.primaryText
                                     )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = name,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontSize = 14.sp,
-                                            color = Color(0xFF5D4037) // Warm brown for text
-                                        )
+                                )
+                            }
+
+                            // Godzina
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Schedule,
+                                    contentDescription = "Godzina",
+                                    tint = colors.iconColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = (reservation.startTime to reservation.endTime).getPolishedTime(),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.primaryText
                                     )
-                                }
+                                )
                             }
                         }
                     }
 
-
-                    // Reservation Status Section
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    // 3. Sekcja Kontakt (zamiast Wyposażenia)
+                    // Załóżmy, że mamy dostęp do danych kontaktowych np. reservation.contactName, reservation.contactEmail
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = colors.accentColor.copy(alpha = 0.1f),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                color = when (reservation.status) {
-                                    ReservationStatus.CONFIRMED -> Color(0xFFE8F5E9) // Light green for confirmed
-                                    ReservationStatus.PENDING -> Color(0xFFFFF3E0) // Light yellow for pending
-                                    else -> Color(0xFFFFEBEE) // Light red for unconfirmed
-                                },
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(12.dp)
+                            .padding(vertical = 4.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "Status",
-                            tint = when (reservation.status) {
-                                ReservationStatus.CONFIRMED -> Color(0xFF4CAF50) // Green for confirmed
-                                ReservationStatus.PENDING -> Color(0xFFFFC107) // Yellow for pending
-                                else -> Color(0xFFF44336) // Red for unconfirmed
-                            },
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = reservation.status.getPolishedStatus(),
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = when (reservation.status) {
-                                    ReservationStatus.CONFIRMED -> Color(0xFF4CAF50) // Green for confirmed
-                                    ReservationStatus.PENDING -> Color(0xFFFFC107) // Yellow for pending
-                                    else -> Color(0xFFF44336) // Red for unconfirmed
-                                }
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                        ) {
+                            Text(
+                                text = "Kontakt",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primaryText
+                                )
                             )
-                        )
+
+                            /*// Ikona i nazwa kontaktu
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Osoba kontaktowa",
+                                    tint = colors.iconColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = reservation.contactName ?: "Brak danych",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = colors.primaryText
+                                    )
+                                )
+                            }*/
+
+                            // Ikona i e-mail
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Email,
+                                    contentDescription = "E-mail",
+                                    tint = colors.iconColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = reservation.roomId.getContactEmail(),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = colors.primaryText
+                                    )
+                                )
+                            }
+                        }
                     }
 
-                    // Action Buttons Section
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp), // Space between buttons
+                    // 4. Status Rezerwacji
+                    val statusColor = when (reservation.status) {
+                        ReservationStatus.CONFIRMED -> Color(0xFF4CAF50)
+                        ReservationStatus.PENDING -> Color(0xFFFFC107)
+                        else -> Color(0xFFF44336)
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = statusColor.copy(alpha = 0.1f),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp) // Padding for spacing around buttons
+                            .padding(vertical = 4.dp)
                     ) {
-                        // Cancel Reservation Button
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "Status",
+                                tint = statusColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = reservation.status.getPolishedStatus(),
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = statusColor
+                                )
+                            )
+                        }
+                    }
+
+                    // 5. Przyciski akcji
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    ) {
+                        // Przycisk Anulowania Rezerwacji
                         Button(
                             onClick = {
                                 showConfirmReservationCancel.value = true
                                 showRequestAdditionalEquipment.value = false
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFF44336), // Vibrant red for cancel
+                                containerColor = colors.errorColor,
                                 contentColor = Color.White
                             ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp)) // Rounded corners for a modern look
-                                .padding(horizontal = 16.dp) // Horizontal padding to align with content
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier.fillMaxWidth() // Ensures alignment within button
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Cancel Icon",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Anuluj Rezerwację",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center // Center text alignment
-                                    )
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Anuluj",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Anuluj Rezerwację", style = MaterialTheme.typography.bodyMedium)
                         }
 
-                        if (!reservation.roomId.hasAdditionalEquipment()) {
-                            // Request Additional Equipment Button
+                        // Przycisk dodatkowego wyposażenia (jeśli brak w sali)
+                        /*if (!reservation.roomId.hasAdditionalEquipment()) {
                             Button(
                                 onClick = {
                                     showConfirmReservationCancel.value = false
                                     showRequestAdditionalEquipment.value = true
                                 },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF6D4C41), // Rich brown for harmony
+                                    containerColor = colors.buttonColor,
                                     contentColor = Color.White
                                 ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp)) // Rounded corners for consistency
-                                    .padding(horizontal = 16.dp) // Horizontal padding to align with content
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center,
-                                    modifier = Modifier.fillMaxWidth() // Ensures alignment within button
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Build, // Replace with appropriate icon for equipment
-                                        contentDescription = "Equipment Icon",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "Poproś o Wyposażenie",
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            textAlign = TextAlign.Center // Center text alignment
-                                        )
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.Default.Build,
+                                    contentDescription = "Wyposażenie",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Poproś o Wyposażenie", style = MaterialTheme.typography.bodyMedium)
                             }
-                        }
-
+                        }*/
                     }
-
-
                 }
-
-
             },
-            confirmButton = {
-                /* Column {
-                     Button(
-                         onClick = {
-                             // Mock cancel reservation action
-                             onDismiss()
-                         },
-                         modifier = Modifier
-                             .fillMaxWidth()
-                             .padding(vertical = 4.dp),
-                         colors = ButtonDefaults.buttonColors(
-                             containerColor = Color(0xFFF44336), // Red for cancel
-                             contentColor = Color.White
-                         )
-                     ) {
-                         Text(text = "Anuluj Rezerwację")
-                     }
-
-                     Button(
-                         onClick = {
-                             // Mock request additional equipment action
-                             onDismiss()
-                         },
-                         modifier = Modifier
-                             .fillMaxWidth()
-                             .padding(vertical = 4.dp),
-                         colors = ButtonDefaults.buttonColors(
-                             containerColor = Color(0xFF4E342E), // Rich brown for harmony
-                             contentColor = Color.White
-                         )
-                     ) {
-                         Text(text = "Poproś o Wyposażenie")
-                     }
-                 }*/
-            },
-            dismissButton = {
-                /*TextButton(onClick = { onDismiss() }) {
-                    Text(
-                        text = "Zamknij",
-                        color = Color(0xFF8D6E63) // Subtle muted brown
-                    )
-                }*/
-            },
+            confirmButton = {},
+            dismissButton = {},
             modifier = Modifier
-                .padding(2.dp)
-                .clip(RoundedCornerShape(16.dp)) // Rounded corners for the dialog
+                .padding(16.dp)
+                .clip(RoundedCornerShape(16.dp))
         )
 
+        // Dodatkowe dialogi (anulowanie, wyposażenie)
         if (showConfirmReservationCancel.value && !showRequestAdditionalEquipment.value) {
-
             CancelReservationDialog(
                 onConfirm = {
                     viewModel.cancelReservation()
@@ -436,72 +360,9 @@ fun ReservationDetailsDialog(
                     showConfirmReservationCancel.value = false
                 }
             )
-
-            /*AlertDialog(
-                onDismissRequest = { showConfirmReservationCancel.value = false },
-                title = {
-                    Text(
-                        text = "Potwierdzenie Anulowania",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF4E342E) // Rich brown for the title
-                        )
-                    )
-                },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = "Czy na pewno chcesz anulować rezerwację?",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = Color(0xFF6D4C41), // Warm brown for text
-                                fontSize = 16.sp
-                            )
-                        )
-                        Text(
-                            text = "Ten krok nie może zostać cofnięty.",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = Color(0xFFD32F2F), // Red to emphasize irreversible action
-                                fontSize = 14.sp
-                            )
-                        )
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            // Add logic to cancel the reservation
-
-                            showConfirmReservationCancel.value = false
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFF44336), // Red for danger
-                            contentColor = Color.White
-                        ),
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        Text(text = "Anuluj Rezerwację")
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showConfirmReservationCancel.value = false },
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "Cofnij",
-                            color = Color(0xFF6D4C41), // Warm brown for dismiss
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                },
-                modifier = Modifier.clip(RoundedCornerShape(16.dp)) // Rounded corners for dialog
-            )*/
         }
 
-
-        if (showRequestAdditionalEquipment.value && !showConfirmReservationCancel.value) {
-
-
+        /*if (showRequestAdditionalEquipment.value && !showConfirmReservationCancel.value) {
             RequestAdditionalEquipmentDialog(
                 state,
                 onConfirm = {
@@ -513,107 +374,54 @@ fun ReservationDetailsDialog(
                     showRequestAdditionalEquipment.value = false
                 }
             )
-
-
-            /*AlertDialog(
-                onDismissRequest = { showRequestAdditionalEquipment.value = false },
-                title = {
-                    Text(
-                        text = "Poproś o Dodatkowe Wyposażenie",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF4E342E) // Rich brown for the title
-                        )
-                    )
-                },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = "Wybierz dodatkowe wyposażenie, które chciałbyś zarezerwować.",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = Color(0xFF6D4C41), // Warm brown for text
-                                fontSize = 16.sp
-                            )
-                        )
-                        // Example of a selectable list for equipment
-                        val equipmentOptions = listOf("Komputer", "Projektor", "Tablica")
-                        val selectedOptions = remember { mutableStateListOf<String>() }
-
-                        equipmentOptions.forEach { equipment ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        if (selectedOptions.contains(equipment)) {
-                                            selectedOptions.remove(equipment)
-                                        } else {
-                                            selectedOptions.add(equipment)
-                                        }
-                                    }
-                                    .padding(vertical = 4.dp)
-                            ) {
-                                Checkbox(
-                                    checked = selectedOptions.contains(equipment),
-                                    onCheckedChange = {
-                                        if (selectedOptions.contains(equipment)) {
-                                            selectedOptions.remove(equipment)
-                                        } else {
-                                            selectedOptions.add(equipment)
-                                        }
-                                    },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = Color(0xFF6D4C41),
-                                        uncheckedColor = Color.Gray
-                                    )
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = equipment,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color(0xFF5D4037)
-                                    )
-                                )
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            // Handle additional equipment request
-
-                            showRequestAdditionalEquipment.value = false
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF6D4C41), // Rich brown for confirmation
-                            contentColor = Color.White
-                        ),
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        Text(text = "Zatwierdź Wyposażenie")
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showRequestAdditionalEquipment.value = false },
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "Anuluj",
-                            color = Color(0xFF6D4C41), // Warm brown for dismiss
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                },
-                modifier = Modifier.clip(RoundedCornerShape(16.dp)) // Rounded corners for dialog
-            )*/
-        }
-
-
+        }*/
     }
 }
+
+
+
+@Composable
+fun RoomInfoSection(state: MainUiState) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, shape = RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Home, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+
+                Text(
+                    text = state.selectedRoomToReserve?.name?.adjustRoomName() ?: "Nieznana sala",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    ),
+                    maxLines = 1
+                )
+
+                Text(
+                    text = state.selectedRoomToReserve?.floor.getFloorName(),
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Liczba miejsc: ${state.selectedRoomToReserve?.capacity ?: "N/A"}",
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface)
+            )
+        }
+    }
+}
+
 
 
 @Composable
@@ -1258,4 +1066,10 @@ private fun String.hasAdditionalEquipment(): Boolean {
             ?: return false// Find the room with the given ID
     return EquipmentType.entries.all { it in equipment }
         ?: false // Check if the room has any matching equipment
+}
+
+
+private fun String.getContactEmail(): String {
+    val email = ActiveRooms.getRooms().value.find { it.id == this }?.contactEmail ?: "Brak adresu e-mail"
+    return email.ifBlank { "Brak adresu e-mail" }
 }
