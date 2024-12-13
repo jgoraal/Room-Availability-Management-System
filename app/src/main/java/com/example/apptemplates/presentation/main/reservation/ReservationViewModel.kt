@@ -348,6 +348,7 @@ class ReservationViewModel(
         _state.update { it.copy(reservationError = error) }
     }
 
+
     fun changeSelectedRoom(room: Room?) {
         _state.update { it.copy(selectedRoomToReserve = room) }
     }

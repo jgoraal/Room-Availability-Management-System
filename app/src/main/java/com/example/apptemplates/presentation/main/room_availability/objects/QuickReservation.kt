@@ -26,6 +26,7 @@ object QuickReservation {
                 .toLocalTime()
     }
 
+
     fun clear() {
         selectedDate.value = null
         startTime.value = null

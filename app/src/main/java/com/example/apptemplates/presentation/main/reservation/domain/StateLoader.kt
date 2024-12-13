@@ -27,6 +27,7 @@ object StateLoader {
         _stateReservationScreen.value = updated
     }
 
+
     fun clearAvailabilityScreenState() {
         _stateAvailabilityScreen.value = null
     }

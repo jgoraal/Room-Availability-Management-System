@@ -32,6 +32,7 @@ abstract class MainViewModel(
     protected val permission = ReservationPermissionManager()
 
 
+
     protected fun <T> wrapWithLoadingState(
         successState: (T) -> Unit,
         errorState: (String) -> Unit,
