@@ -21,6 +21,7 @@ import com.example.apptemplates.presentation.main.reservation.domain.FetchAvaila
 import com.example.apptemplates.presentation.main.reservation.domain.FetchLessonsUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.FetchRecurringReservationsUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.FetchStandardReservationsUseCase
+import com.example.apptemplates.presentation.main.reservation.domain.StateLoader
 import com.example.apptemplates.presentation.main.room_availability.objects.QuickReservation
 import com.example.apptemplates.presentation.main.temp.ReservationError
 import com.example.apptemplates.viewmodel.MainViewModel
@@ -41,6 +42,18 @@ class ReservationViewModel(
     private val addLesson: AddLessonUseCase = AddLessonUseCase(),
     private val addRoom: AddRoomUseCase = AddRoomUseCase(),
 ) : MainViewModel() {
+
+    private val savedScreenState = StateLoader.stateReservationScreen
+
+    fun saveState() {
+        StateLoader.updateReservationScreenState(_state.value)
+    }
+
+    init {
+        if (savedScreenState.value != null) {
+            _state.value = savedScreenState.value!!
+        }
+    }
 
 
     /*init {
@@ -80,6 +93,8 @@ class ReservationViewModel(
                     if (rooms.isEmpty()) {
                         handleError(UiError.DatabaseError("Brak dostępnych sal!"))
                     }
+
+                    saveState()
 
                 },
                 errorState = { message ->
@@ -347,7 +362,11 @@ class ReservationViewModel(
                 it.copy(
                     selectedDate = QuickReservation.getSelectedDate(),
                     selectedTime = QuickReservation.getStartTime(),
-                    selectedEndTime = QuickReservation.getEndTime()
+                    selectedEndTime = QuickReservation.getEndTime(),
+                    showTimePicker = true,
+                    showRecurringPicker = true,
+                    showAttendeesPicker = true,
+                    showOtherFiltersPicker = true
                 )
             }
         }

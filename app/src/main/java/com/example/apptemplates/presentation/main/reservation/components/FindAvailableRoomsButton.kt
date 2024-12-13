@@ -28,9 +28,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.apptemplates.presentation.main.reservation.ReservationViewModel
+import com.example.apptemplates.presentation.main.temp.MainUiState
 
 @Composable
-fun FindAvailableRoomsButton(viewModel: ReservationViewModel, isDarkTheme: Boolean) {
+fun FindAvailableRoomsButton(
+    viewModel: ReservationViewModel, state: MainUiState, isDarkTheme: Boolean
+) {
     val gradientColors = if (isDarkTheme) {
         // Gradient dla ciemnego motywu
         listOf(Color(0xFF1A237E), Color(0xFF3949AB)) // Granatowy z odcieniem niebieskiego
@@ -40,49 +43,54 @@ fun FindAvailableRoomsButton(viewModel: ReservationViewModel, isDarkTheme: Boole
     }
 
     val textColor =
-        if (isDarkTheme) Color(0xFFAEDFF7) else Color(0xFF3E2723) // Twój wybrany kolor tekstu
+        if (isDarkTheme) Color(0xFFAEDFF7) else Color(0xFF3E2723)
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Button(
-            onClick = { viewModel.findRooms() },
+    if (state.showTimePicker) {
+
+        Box(
             modifier = Modifier
-                .width(280.dp)
-                .height(56.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(
-                    brush = Brush.horizontalGradient(gradientColors)
-                ),
-            contentPadding = PaddingValues(0.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent // Transparentne tło, gradient w tle
-            ),
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+            Button(
+                onClick = { viewModel.findRooms() },
+                modifier = Modifier
+                    .width(280.dp)
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        brush = Brush.horizontalGradient(gradientColors)
+                    ),
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent // Transparentne tło, gradient w tle
+                ),
             ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search Icon",
-                    tint = textColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Szukaj dostępnych sal",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = textColor,
-                        fontWeight = FontWeight.SemiBold
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search Icon",
+                        tint = textColor,
+                        modifier = Modifier.size(24.dp)
                     )
-                )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Szukaj dostępnych sal",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = textColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
             }
         }
     }
+
+
 }
 
 

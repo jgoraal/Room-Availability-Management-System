@@ -4,11 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.navigation.compose.rememberNavController
 import com.example.apptemplates.navigation.nav_graph.RootNavGraph
-import com.example.apptemplates.presentation.login.login_menu.AuthViewModel
 import com.example.apptemplates.ui.theme.AppTemplatesTheme
 
 class MainActivity : ComponentActivity() {

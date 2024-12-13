@@ -38,349 +38,37 @@ import com.example.apptemplates.presentation.main.reservation.getNameInPolish
 import com.example.apptemplates.presentation.main.room_availability.TopDownElement
 import com.example.apptemplates.presentation.main.temp.MainUiState
 
-/*@Composable
-fun AdditionalFiltersPicker(viewModel: ReservationViewModel, state: MainUiState) {
-    var isAdditionalFiltersVisible by remember { mutableStateOf(false) }
-    val availableEquipment = listOf(
-        EquipmentType.COMPUTER,
-        EquipmentType.PROJECTOR,
-        EquipmentType.WHITEBOARD
-    )
-    var ignoreEquipment by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .background(color = MaterialTheme.colorScheme.surface)
-            .padding(16.dp)
-    ) {
-        // Główny nagłówek sekcji filtrów
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isAdditionalFiltersVisible = !isAdditionalFiltersVisible },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.FilterAlt,
-                contentDescription = "Filtry",
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Dodatkowe filtry",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                imageVector = if (isAdditionalFiltersVisible) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = "Rozwiń / Zwiń",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        AnimatedVisibility(
-            visible = isAdditionalFiltersVisible,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-                    Text(
-                        text = "Wybierz piętro",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    DropdownMenuFloorPicker(
-                        selectedFloor = state.selectedFloor
-                    ) { selectedFloor ->
-                        viewModel.updateSelectedFloor(selectedFloor)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Sekcja wyposażenia
-                Text(
-                    text = "Wybierz wyposażenie:",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Checkbox "Nie bierz pod uwagę"
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            ignoreEquipment = !ignoreEquipment
-                            if (ignoreEquipment) {
-                                viewModel.updateSelectedEquipment(emptyList()) // Odznacz wszystkie
-                            }
-                        },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = ignoreEquipment,
-                        onCheckedChange = { isChecked ->
-                            ignoreEquipment = isChecked
-                            if (isChecked) {
-                                viewModel.updateSelectedEquipment(emptyList())
-                            }
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Nie uwzględniaj wyposażenia",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-
-                availableEquipment.forEach { equipment ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                if (!ignoreEquipment) {
-                                    val updatedEquipment =
-                                        if (state.selectedEquipment.contains(equipment)) {
-                                            state.selectedEquipment - equipment
-                                        } else {
-                                            state.selectedEquipment + equipment
-                                        }
-                                    viewModel.updateSelectedEquipment(updatedEquipment)
-                                }
-                            },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = state.selectedEquipment.contains(equipment) && !ignoreEquipment,
-                            onCheckedChange = { isChecked ->
-                                if (!ignoreEquipment) {
-                                    val updatedEquipment = if (isChecked) {
-                                        state.selectedEquipment + equipment
-                                    } else {
-                                        state.selectedEquipment - equipment
-                                    }
-                                    viewModel.updateSelectedEquipment(updatedEquipment)
-                                }
-                            }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = equipment.getNameInPolish(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-}*/
-
-/*
-@Composable
-fun AdditionalFiltersPicker(viewModel: ReservationViewModel, state: MainUiState) {
-    var isAdditionalFiltersVisible by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .background(color = MaterialTheme.colorScheme.surface)
-            .padding(16.dp)
-    ) {
-        // Nagłówek
-        FiltersHeader(
-            isVisible = isAdditionalFiltersVisible,
-            onToggleVisibility = { isAdditionalFiltersVisible = !isAdditionalFiltersVisible }
-        )
-
-        AnimatedVisibility(
-            visible = isAdditionalFiltersVisible,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-            ) {
-                // Wybór piętra
-                FloorPicker(state, viewModel)
-
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Sekcja wyposażenia
-                EquipmentFilters(viewModel, state)
-            }
-        }
-    }
-}*/
 
 @Composable
 fun AdditionalFiltersPicker(viewModel: ReservationViewModel, state: MainUiState) {
     val isAdditionalFiltersVisible by remember { mutableStateOf(false) }
 
-    TopDownElement(
-        visible = remember { mutableStateOf(isAdditionalFiltersVisible) },
-        imageVector = Icons.Default.FilterAlt,
-        title = "Dodatkowe filtry",
-        titleStyle = MaterialTheme.typography.bodyLarge
-    ) {
-        // Wybór piętra
-        FloorPicker(state, viewModel)
 
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Sekcja wyposażenia
-        EquipmentFilters(viewModel, state)
-    }
-}
-
-
-/*@Composable
-fun FloorPicker(state: MainUiState, viewModel: ReservationViewModel) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        Text(
-            text = "Wybierz piętro",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        DropdownMenuFloorPicker(
-            selectedFloor = state.selectedFloor
-        ) { selectedFloor ->
-            viewModel.updateSelectedFloor(selectedFloor)
-        }
-    }
-}
-
-
-@Composable
-fun EquipmentFilters(viewModel: ReservationViewModel, state: MainUiState) {
-    val availableEquipment = listOf(
-        EquipmentType.COMPUTER,
-        EquipmentType.PROJECTOR,
-        EquipmentType.WHITEBOARD
-    )
-    var ignoreEquipment by remember { mutableStateOf(false) }
-
-    // Checkbox "Nie uwzględniaj wyposażenia"
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                ignoreEquipment = !ignoreEquipment
-                if (ignoreEquipment) {
-                    viewModel.updateSelectedEquipment(emptyList()) // Odznacz wszystkie
-                }
-            },
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = ignoreEquipment,
-            onCheckedChange = { isChecked ->
-                ignoreEquipment = isChecked
-                viewModel.updateIgnoreEquipment(isChecked)
-                if (isChecked) {
-                    viewModel.updateSelectedEquipment(emptyList())
-                }
-            }
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Nie uwzględniaj wyposażenia",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    // Lista dostępnego wyposażenia
-    availableEquipment.forEach { equipment ->
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    if (!ignoreEquipment) {
-                        val updatedEquipment =
-                            if (state.selectedEquipment.contains(equipment)) {
-                                state.selectedEquipment - equipment
-                            } else {
-                                state.selectedEquipment + equipment
-                            }
-                        viewModel.updateSelectedEquipment(updatedEquipment)
-                    }
-                },
-            verticalAlignment = Alignment.CenterVertically
+    if (state.showOtherFiltersPicker) {
+        TopDownElement(
+            visible = remember { mutableStateOf(isAdditionalFiltersVisible) },
+            imageVector = Icons.Default.FilterAlt,
+            title = "Dodatkowe filtry",
+            titleStyle = MaterialTheme.typography.bodyLarge
         ) {
-            Checkbox(
-                checked = state.selectedEquipment.contains(equipment) && !ignoreEquipment,
-                onCheckedChange = { isChecked ->
-                    if (!ignoreEquipment) {
-                        val updatedEquipment = if (isChecked) {
-                            state.selectedEquipment + equipment
-                        } else {
-                            state.selectedEquipment - equipment
-                        }
-                        viewModel.updateSelectedEquipment(updatedEquipment)
-                    }
-                }
+            // Wybór piętra
+            FloorPicker(state, viewModel)
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = equipment.getNameInPolish(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Sekcja wyposażenia
+            EquipmentFilters(viewModel, state)
         }
-        Spacer(modifier = Modifier.height(8.dp))
     }
-}*/
+
+
+}
 
 
 @Composable
@@ -423,6 +111,8 @@ fun FloorPicker(state: MainUiState, viewModel: ReservationViewModel) {
             if (state.availableRooms.isNotEmpty()) {
                 viewModel.clearAvailableRooms()
             }
+
+            viewModel.saveState()
         }
     }
 }
@@ -468,6 +158,8 @@ fun EquipmentFilters(viewModel: ReservationViewModel, state: MainUiState) {
                     if (ignoreEquipment) {
                         viewModel.updateSelectedEquipment(emptyList())
                     }
+
+                    viewModel.saveState()
                 },
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -484,6 +176,8 @@ fun EquipmentFilters(viewModel: ReservationViewModel, state: MainUiState) {
                     if (isChecked) {
                         viewModel.updateSelectedEquipment(emptyList())
                     }
+
+                    viewModel.saveState()
                 },
                 colors = CheckboxDefaults.colors(
                     checkedColor = checkboxColor,
@@ -523,6 +217,8 @@ fun EquipmentFilters(viewModel: ReservationViewModel, state: MainUiState) {
                                 }
                             viewModel.updateSelectedEquipment(updatedEquipment)
                         }
+
+                        viewModel.saveState()
                     },
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -542,6 +238,8 @@ fun EquipmentFilters(viewModel: ReservationViewModel, state: MainUiState) {
                             }
                             viewModel.updateSelectedEquipment(updatedEquipment)
                         }
+
+                        viewModel.saveState()
                     },
                     colors = CheckboxDefaults.colors(
                         checkedColor = checkboxColor,

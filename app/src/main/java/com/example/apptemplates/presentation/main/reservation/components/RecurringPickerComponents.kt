@@ -332,6 +332,8 @@ fun RecurrencePickerContent(
                         viewModel.changeRecurring(it)
                         if (!it) viewModel.changeEndDate(null)
                         else if (state.endRecurrenceDate == null) viewModel.updateEndRecurrenceDate()
+
+                        viewModel.saveState()
                     },
                     titleColor = titleColor
                 )
@@ -345,6 +347,8 @@ fun RecurrencePickerContent(
                             if (state.availableRooms.isNotEmpty()) {
                                 viewModel.clearAvailableRooms()
                             }
+
+                            viewModel.saveState()
                         },
                         titleColor = titleColor,
                         iconTint = iconTint
@@ -489,6 +493,8 @@ fun EndDateSelector(
                         }
 
                         if (state.duration > 1) viewModel.updateDuration(-1)
+
+                        viewModel.saveState()
                     },
                     modifier = Modifier.size(36.dp)
                 ) {
@@ -510,6 +516,8 @@ fun EndDateSelector(
                             viewModel.clearAvailableRooms()
                         }
                         if (viewModel.canAddDuration()) viewModel.updateDuration(1)
+
+                        viewModel.saveState()
                     },
                     modifier = Modifier.size(36.dp)
                 ) {

@@ -6,6 +6,7 @@ import com.example.apptemplates.data.room.Lesson
 import com.example.apptemplates.data.room.Room
 import com.example.apptemplates.form.ScreenState
 import com.example.apptemplates.form.UiError
+import com.example.apptemplates.presentation.main.reservation.domain.StateLoader
 import com.example.apptemplates.presentation.main.room_availability.domain.RoomFetchRepository
 import com.example.apptemplates.presentation.main.room_availability.domain.UserUseCase
 import com.example.apptemplates.viewmodel.MainViewModel
@@ -23,8 +24,12 @@ class RoomAvailabilityViewModel(
     private val userUseCase: UserUseCase = UserUseCase()
 ) : MainViewModel() {
 
-    init {
+    private val savedScreenState = StateLoader.stateAvailabilityScreen
 
+    init {
+        if (savedScreenState.value != null) {
+            _state.value = savedScreenState.value!!
+        }
     }
 
 

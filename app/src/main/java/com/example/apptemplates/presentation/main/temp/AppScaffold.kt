@@ -72,6 +72,7 @@ import com.example.apptemplates.presentation.main.profile.ProfileViewModel
 import com.example.apptemplates.presentation.main.profile.domain.SignOutUseCase
 import com.example.apptemplates.presentation.main.reservation.ReservationView
 import com.example.apptemplates.presentation.main.reservation.ReservationViewModel
+import com.example.apptemplates.presentation.main.reservation.domain.StateLoader
 import com.example.apptemplates.presentation.main.room_availability.LessonBookedSlot
 import com.example.apptemplates.presentation.main.room_availability.RoomAvailabilityView
 import com.example.apptemplates.presentation.main.room_availability.RoomAvailabilityViewModel
@@ -350,6 +351,8 @@ private fun NavGraphBuilder.reservationScreen(
                     launchSingleTop = true
                     restoreState = true
                 }
+
+                StateLoader.clearReservationScreenState()
             }
         )
     }

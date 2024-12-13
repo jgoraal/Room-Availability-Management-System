@@ -14,7 +14,7 @@ sealed class UserRole(val permissions: List<Permission>) {
     data object Student : UserRole(
         listOf(
             Permission.CanReserveRoom(
-                maxReservationCount = 2,
+                maxReservationCount = 3,
                 allowedReservationTypes = listOf(
                     ReservationType.STANDARD,
                 )
@@ -32,7 +32,7 @@ sealed class UserRole(val permissions: List<Permission>) {
     data object Employee : UserRole(
         listOf(
             Permission.CanReserveRoom(
-                maxReservationCount = 5,
+                maxReservationCount = 100,
                 allowedReservationTypes = listOf(
                     ReservationType.STANDARD,
                     ReservationType.RECURRING,

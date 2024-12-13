@@ -106,14 +106,18 @@ fun NumberOfAttendeesSelector(
 ) {
     val isNumberOfAttendeesVisible = remember { mutableStateOf(false) }
 
-    TopDownElement(
-        visible = isNumberOfAttendeesVisible,
-        imageVector = Icons.Default.Groups,
-        title = state.selectedAttendees.getAttendeesText(),
-        titleStyle = MaterialTheme.typography.bodyLarge
-    ) {
-        NumberOfAttendeesView(viewModel, state, onSuccess)
+    if (state.showAttendeesPicker) {
+        TopDownElement(
+            visible = isNumberOfAttendeesVisible,
+            imageVector = Icons.Default.Groups,
+            title = state.selectedAttendees.getAttendeesText(),
+            titleStyle = MaterialTheme.typography.bodyLarge
+        ) {
+            NumberOfAttendeesView(viewModel, state, onSuccess)
+        }
     }
+
+
 }
 
 

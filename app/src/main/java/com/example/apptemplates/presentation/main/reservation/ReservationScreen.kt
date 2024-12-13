@@ -70,12 +70,11 @@ data class ReservationState(
 )
 
 
-@Preview(showBackground = true)
 @Composable
 fun ReservationView(
     state: MainUiState = MainUiState(),
-    viewModel: ReservationViewModel = ReservationViewModel(),
-    padding: PaddingValues = PaddingValues(0.dp),
+    viewModel: ReservationViewModel,
+    padding: PaddingValues,
     navigateOnSuccess: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -88,12 +87,6 @@ fun ReservationView(
 
     viewModel.checkIfQuickReservationIsReady()
 
-    if (QuickReservation.getStartTime() != null) {
-        viewModel.updateVisibility(true)
-    }
-
-
-    // Main LazyColumn for the form elements, excluding the room list
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -102,8 +95,11 @@ fun ReservationView(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(if (state.availableRooms.isEmpty()) 16.dp else 8.dp)
     ) {
-        // Existing items like calendar, time picker, etc.
-        item { /*ReservationHeader()*/ }
+
+        // Screen title header * DELETE_LATER *
+        //item { /*ReservationHeader()*/ }
+
+        //  Reservation date item
         item {
             CalendarPickerInTopDown(
                 state,
@@ -119,76 +115,81 @@ fun ReservationView(
                     viewModel.clearAvailableRooms()
                 }
 
+
+                viewModel.saveState()
             }
         }
 
-        if (state.showTimePicker) {
-            item {
-                TimePickerInTopDown(state, viewModel) {
-                    viewModel.updateShowRecurringPicker(true)
-                    viewModel.updateShowAttendeesPicker(true)
-                    viewModel.updateShowOtherFiltersPicker(true)
+        //  Reservation start and end time item
+        item {
+            TimePickerInTopDown(state, viewModel) {
+                viewModel.updateShowRecurringPicker(true)
+                viewModel.updateShowAttendeesPicker(true)
+                viewModel.updateShowOtherFiltersPicker(true)
 
-                    if (state.availableRooms.isNotEmpty()) {
-                        viewModel.clearAvailableRooms()
-                    }
+                if (state.availableRooms.isNotEmpty()) {
+                    viewModel.clearAvailableRooms()
                 }
+
+                viewModel.saveState()
             }
         }
 
-        if (state.showRecurringPicker && viewModel.canUserMakeRecurringReservation()) {
-            item { CalendarEndDatePicker(viewModel = viewModel, state = state) }
-        }
+        //  Reservation recurring item *only for employees and admins*
+        item { CalendarEndDatePicker(viewModel = viewModel, state = state) }
 
-        if (state.showAttendeesPicker) {
-            item {
-                NumberOfAttendeesSelector(viewModel, state) {
-                    if (state.availableRooms.isNotEmpty()) {
-                        viewModel.clearAvailableRooms()
-                    }
 
-                    viewModel.updateShowRecurringPicker(true)
-                    viewModel.updateShowOtherFiltersPicker(true)
+        //  Reservation number of attendees item
+        item {
+            NumberOfAttendeesSelector(viewModel, state) {
+                if (state.availableRooms.isNotEmpty()) {
+                    viewModel.clearAvailableRooms()
                 }
+
+                viewModel.updateShowRecurringPicker(true)
+                viewModel.updateShowOtherFiltersPicker(true)
+
+                viewModel.saveState()
             }
         }
 
-        if (state.showOtherFiltersPicker) {
-            item { AdditionalFiltersPicker(viewModel, state) }
-        }
+        //  Reservation additional filters item
+        item { AdditionalFiltersPicker(viewModel, state) }
 
-
+        //  Section divider
         item { HorizontalDivider() }
-        if (state.showTimePicker) {
-            item {
-                SelectedData(
-                    viewModel,
-                    state,
-                    state.showTimePicker,
-                    state.showAttendeesPicker,
-                    state.showRecurringPicker,
-                    state.showOtherFiltersPicker
-                )
-            }
+
+        //  Summary of selected reservation params
+        item {
+            SelectedData(
+                viewModel,
+                state,
+                state.showTimePicker,
+                state.showAttendeesPicker,
+                state.showRecurringPicker,
+                state.showOtherFiltersPicker
+            )
         }
 
-        if (state.showAttendeesPicker) {
-            item {
-                FindAvailableRoomsButton(viewModel, isSystemInDarkTheme())
-            }
+        //  Button to find available rooms
+        item {
+            FindAvailableRoomsButton(viewModel, state, isSystemInDarkTheme())
         }
 
+        //  Available rooms list
         item { AvailableRoomsList(state, viewModel) }
     }
 
 }
 
 
-/*@Composable
-fun TimePicker(
-    state: MainUiState, viewModel: ReservationViewModel, onSuccess: () -> Unit
+@Composable
+fun TimePickerInTopDown(
+    state: MainUiState,
+    viewModel: ReservationViewModel,
+    onSuccess: () -> Unit
 ) {
-    var isTimePickerVisible by remember { mutableStateOf(false) }
+    val isTimePickerVisible = remember { mutableStateOf(false) }
     var startTime by remember { mutableStateOf(state.selectedTime ?: getPreferredStartTime(state)) }
     var endTime by remember {
         mutableStateOf(
@@ -199,42 +200,12 @@ fun TimePicker(
     }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isTimePickerVisible = !isTimePickerVisible },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.AccessTime, contentDescription = "Calendar Icon"
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = state.selectedTime.getTimesText(state.selectedEndTime),
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                imageVector = if (isTimePickerVisible) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = "Toggle Calendar"
-            )
-        }
 
-
-
-        AnimatedVisibility(
+    if (state.showTimePicker) {
+        TopDownElement(
             visible = isTimePickerVisible,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
+            imageVector = Icons.Default.AccessTime,
+            title = state.selectedTime.getTimesText(state.selectedEndTime)
         ) {
             Column(
                 modifier = Modifier
@@ -242,7 +213,7 @@ fun TimePicker(
                     .padding(top = 16.dp)
             ) {
                 // Walidacja przy otwarciu
-                if (isTimePickerVisible && state.selectedTime == null && state.selectedEndTime == null) {
+                if (state.selectedTime == null && state.selectedEndTime == null) {
                     if (!validateTimeDifference(startTime, endTime)) {
                         errorMessage = "Różnica między godzinami musi wynosić co najmniej 90 minut."
                     } else {
@@ -263,7 +234,8 @@ fun TimePicker(
                     )
                 }
 
-                TimePickerOption(label = "Godzina rozpoczęcia",
+                TimePickerOption(
+                    label = "Godzina rozpoczęcia",
                     label2 = "Godzina zakończenia",
                     initialTime = startTime,
                     initialEndTime = endTime,
@@ -289,95 +261,13 @@ fun TimePicker(
                         } else {
                             errorMessage = "Niepoprawna godzina zakończenia!"
                         }
-                    })
-
-
-            }
-        }
-    }
-}*/
-
-
-@Composable
-fun TimePickerInTopDown(
-    state: MainUiState,
-    viewModel: ReservationViewModel,
-    onSuccess: () -> Unit
-) {
-    val isTimePickerVisible = remember { mutableStateOf(false) }
-    var startTime by remember { mutableStateOf(state.selectedTime ?: getPreferredStartTime(state)) }
-    var endTime by remember {
-        mutableStateOf(
-            state.selectedEndTime ?: getPreferredEndTime(
-                startTime, state
-            )
-        )
-    }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    TopDownElement(
-        visible = isTimePickerVisible,
-        imageVector = Icons.Default.AccessTime,
-        title = state.selectedTime.getTimesText(state.selectedEndTime)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
-        ) {
-            // Walidacja przy otwarciu
-            if (state.selectedTime == null && state.selectedEndTime == null) {
-                if (!validateTimeDifference(startTime, endTime)) {
-                    errorMessage = "Różnica między godzinami musi wynosić co najmniej 90 minut."
-                } else {
-                    errorMessage = null
-                    viewModel.changeReservationTimes(startTime, endTime)
-                    onSuccess()
-                }
-            }
-
-            // Wyświetlanie komunikatu błędu
-            errorMessage?.let { error ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = error,
-                    color = Color.Red,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    }
                 )
             }
-
-            TimePickerOption(
-                label = "Godzina rozpoczęcia",
-                label2 = "Godzina zakończenia",
-                initialTime = startTime,
-                initialEndTime = endTime,
-                state = state,
-                onStartTimeSelected = { newTime ->
-                    val newEndTime = getPreferredEndTime(newTime, state)
-                    if (validateTimeDifference(newTime, endTime)) {
-                        startTime = newTime
-                        endTime = newEndTime
-                        viewModel.changeTime(newTime)
-                        viewModel.changeEndTime(newEndTime)
-                        errorMessage = null
-                        onSuccess()
-                    } else {
-                        errorMessage = "Niepoprawna godzina rozpoczęcia!"
-                    }
-                },
-                onEndTimeSelected = { newTime ->
-                    if (validateTimeDifference(startTime, newTime)) {
-                        endTime = newTime
-                        viewModel.changeEndTime(newTime)
-                        errorMessage = null
-                    } else {
-                        errorMessage = "Niepoprawna godzina zakończenia!"
-                    }
-                }
-            )
         }
     }
+
+
 }
 
 
@@ -424,195 +314,6 @@ private fun LocalTime?.getTimesText(endTime: LocalTime?): String {
 }
 
 
-/*@Composable
-fun CalendarEndDatePicker(
-    modifier: Modifier = Modifier, viewModel: ReservationViewModel, state: MainUiState
-) {
-    var isCalendarVisible by remember { mutableStateOf(false) }
-    val showEndDatePicker by remember { mutableStateOf(true) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .background(color = MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    ) {
-        // Date picker header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isCalendarVisible = !isCalendarVisible },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.EventRepeat, contentDescription = "Calendar Icon"
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Wybierz cykliczność", style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                imageVector = if (isCalendarVisible) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = "Toggle Calendar"
-            )
-        }
-
-        // Animated visibility for the calendar
-        AnimatedVisibility(
-            visible = isCalendarVisible,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = Color(0xFFF4F2FF),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .border(
-                            2.dp,
-                            Color(0xFF9B5DE5),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        // Recurrence checkbox
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "Czy jest to rezerwacja cykliczna",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Checkbox(checked = state.isRecurring, onCheckedChange = { isChecked ->
-                                viewModel.changeRecurring(isChecked)
-                            })
-                        }
-
-                        if (state.isRecurring) {
-                            // Recurrence frequency selection
-                            Column(
-                                modifier = Modifier.wrapContentHeight(),
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.wrapContentWidth()
-                                ) {
-                                    Column(
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        RadioButton(selected = state.recurringFrequency == RecurrenceFrequency.WEEKLY,
-                                            onClick = {
-                                                viewModel.changeFrequency(
-                                                    RecurrenceFrequency.WEEKLY
-                                                )
-                                            })
-                                        Text(
-                                            text = "Tygodniowo",
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column(
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        RadioButton(selected = state.recurringFrequency == RecurrenceFrequency.BIWEEKLY,
-                                            onClick = {
-                                                viewModel.changeFrequency(
-                                                    RecurrenceFrequency.BIWEEKLY
-                                                )
-                                            })
-                                        Text(
-                                            text = "Co dwa tygodnie",
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column(
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        RadioButton(selected = state.recurringFrequency == RecurrenceFrequency.MONTHLY,
-                                            onClick = {
-                                                viewModel.changeFrequency(
-                                                    RecurrenceFrequency.MONTHLY
-                                                )
-                                            })
-                                        Text(
-                                            text = "Miesięcznie",
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // End date selector
-                            if (showEndDatePicker) {
-                                Text(
-                                    text = "Wybierz datę zakończenia",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Button(onClick = {}) {
-                                    val endDate = null
-                                    Text(text = endDate?.toString() ?: "Wybierz datę zakończenia")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-
-        }
-    }
-}*/
-
-
-/*@Composable
-fun CalendarEndDatePicker(
-    viewModel: ReservationViewModel, state: MainUiState, modifier: Modifier = Modifier
-) {
-    var isCalendarVisible by remember { mutableStateOf(false) }
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    ) {
-        DatePickerHeader(state, isCalendarVisible) { isCalendarVisible = !isCalendarVisible }
-        RecurrencePickerContent(
-            isVisible = isCalendarVisible, viewModel = viewModel, state = state
-        )
-    }
-}*/
-
 @Composable
 fun CalendarEndDatePicker(
     viewModel: ReservationViewModel, state: MainUiState, modifier: Modifier = Modifier
@@ -638,56 +339,32 @@ fun CalendarEndDatePicker(
     val expandedBorderColor = if (isDarkTheme) Color(0xFF48C9B0) else Color(0xFF6D4C41)
 
 
-    TopDownElement(
-        visible = isVisible,
-        imageVector = Icons.Default.EventRepeat,
-        title = state.endRecurrenceDate.getRecurrenceText(state.recurringFrequency),
-        titleStyle = MaterialTheme.typography.bodyLarge.copy(
-            color = MaterialTheme.colorScheme.onBackground
-        ),
-        content = {
-            RecurrencePickerContent(
-                isVisible = isVisible.value,
-                viewModel = viewModel,
-                state = state,
-                titleColor = titleColor,
-                iconTint = iconTint,
-                containerBrush = containerBrush,
-                borderColor = borderColor,
-                expandedContainerColor = expandedContainerColor,
-                expandedBorderColor = expandedBorderColor
-            )
-        }
-    )
-}
-
-/*
-@Composable
-fun DatePickerHeader(state: MainUiState, isVisible: Boolean, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
+    if (state.showRecurringPicker && viewModel.canUserMakeRecurringReservation()) {
+        TopDownElement(
+            visible = isVisible,
             imageVector = Icons.Default.EventRepeat,
-            contentDescription = "Calendar Icon",
-            tint = Color(0xFF9B5DE5)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = state.endRecurrenceDate.getRecurrenceText(state.recurringFrequency),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Icon(
-            imageVector = if (isVisible) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-            contentDescription = "Toggle Calendar"
+            title = state.endRecurrenceDate.getRecurrenceText(state.recurringFrequency),
+            titleStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onBackground
+            ),
+            content = {
+                RecurrencePickerContent(
+                    isVisible = isVisible.value,
+                    viewModel = viewModel,
+                    state = state,
+                    titleColor = titleColor,
+                    iconTint = iconTint,
+                    containerBrush = containerBrush,
+                    borderColor = borderColor,
+                    expandedContainerColor = expandedContainerColor,
+                    expandedBorderColor = expandedBorderColor
+                )
+            }
         )
     }
-}*/
+
+
+}
 
 
 private fun LocalDate?.getRecurrenceText(freq: RecurrenceFrequency?): String {
@@ -707,42 +384,7 @@ private fun RecurrenceFrequency.getFrequencyName(): String {
     }
 }
 
-/*@Composable
-fun FrequencyOption(text: String, isSelected: Boolean, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        RadioButton(selected = isSelected, onClick = onClick)
-        Text(text = text, style = MaterialTheme.typography.labelMedium)
-    }
-}*/
 
-
-/*// Adjust the duration increment based on recurrence frequency
-fun getStepValue(frequency: RecurrenceFrequency): Int {
-    return when (frequency) {
-        RecurrenceFrequency.WEEKLY -> 1
-        RecurrenceFrequency.BIWEEKLY -> 1
-        RecurrenceFrequency.MONTHLY -> 1
-    }
-}
-
-fun getDuration(frequency: RecurrenceFrequency, duration: Int): String {
-    return when (frequency) {
-        RecurrenceFrequency.WEEKLY -> duration.toString()
-        RecurrenceFrequency.BIWEEKLY -> (duration * 2).toString()
-        RecurrenceFrequency.MONTHLY -> duration.toString()
-    }
-}
-
-@Composable
-fun getDurationLabel(frequency: RecurrenceFrequency): String {
-    return when (frequency) {
-        RecurrenceFrequency.WEEKLY -> "Tygodnie"
-        RecurrenceFrequency.BIWEEKLY -> "Tygodnie"
-        RecurrenceFrequency.MONTHLY -> "Miesiące"
-    }
-}*/
-
-// Format end date as dd.MM.yyyy
 fun calculateFormattedEndDate(
     state: MainUiState, viewModel: ReservationViewModel, duration: Int
 ): String {
