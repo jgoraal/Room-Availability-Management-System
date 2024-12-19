@@ -45,7 +45,7 @@ fun FindAvailableRoomsButton(
     val textColor =
         if (isDarkTheme) Color(0xFFAEDFF7) else Color(0xFF3E2723)
 
-    if (state.showTimePicker) {
+
 
         Box(
             modifier = Modifier
@@ -88,7 +88,7 @@ fun FindAvailableRoomsButton(
                 }
             }
         }
-    }
+
 
 
 }

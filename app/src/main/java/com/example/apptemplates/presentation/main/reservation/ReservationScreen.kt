@@ -26,7 +26,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.apptemplates.data.reservation.RecurrenceFrequency
 import com.example.apptemplates.data.room.EquipmentType
@@ -42,7 +41,6 @@ import com.example.apptemplates.presentation.main.reservation.components.Recurre
 import com.example.apptemplates.presentation.main.reservation.components.SelectedData
 import com.example.apptemplates.presentation.main.reservation.components.TimePickerOption
 import com.example.apptemplates.presentation.main.room_availability.TopDownElement
-import com.example.apptemplates.presentation.main.room_availability.objects.QuickReservation
 import com.example.apptemplates.presentation.main.temp.MainUiState
 import com.example.apptemplates.ui.theme.getContentBackGround
 import java.time.LocalDate
@@ -78,7 +76,6 @@ fun ReservationView(
     navigateOnSuccess: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-
 
 
     DialogRoomReservation(
@@ -122,60 +119,77 @@ fun ReservationView(
         }
 
         //  Reservation start and end time item
-        item {
-            TimePickerInTopDown(state, viewModel) {
-                viewModel.updateShowRecurringPicker(true)
-                viewModel.updateShowAttendeesPicker(true)
-                viewModel.updateShowOtherFiltersPicker(true)
+        if (state.showTimePicker) {
+            item {
+                TimePickerInTopDown(state, viewModel) {
+                    viewModel.updateShowRecurringPicker(true)
+                    viewModel.updateShowAttendeesPicker(true)
+                    viewModel.updateShowOtherFiltersPicker(true)
 
-                if (state.availableRooms.isNotEmpty()) {
-                    viewModel.clearAvailableRooms()
+                    if (state.availableRooms.isNotEmpty()) {
+                        viewModel.clearAvailableRooms()
+                    }
+
+                    viewModel.saveState()
                 }
-
-                viewModel.saveState()
             }
+
         }
 
         //  Reservation recurring item *only for employees and admins*
-        item { CalendarEndDatePicker(viewModel = viewModel, state = state) }
+        if (state.showRecurringPicker && viewModel.canUserMakeRecurringReservation()) {
+            item { CalendarEndDatePicker(viewModel = viewModel, state = state) }
+        }
 
 
         //  Reservation number of attendees item
-        item {
-            NumberOfAttendeesSelector(viewModel, state) {
-                if (state.availableRooms.isNotEmpty()) {
-                    viewModel.clearAvailableRooms()
+        if (state.showAttendeesPicker) {
+            item {
+                NumberOfAttendeesSelector(viewModel, state) {
+                    if (state.availableRooms.isNotEmpty()) {
+                        viewModel.clearAvailableRooms()
+                    }
+
+                    viewModel.updateShowRecurringPicker(true)
+                    viewModel.updateShowOtherFiltersPicker(true)
+
+                    viewModel.saveState()
                 }
-
-                viewModel.updateShowRecurringPicker(true)
-                viewModel.updateShowOtherFiltersPicker(true)
-
-                viewModel.saveState()
             }
         }
 
+
         //  Reservation additional filters item
-        item { AdditionalFiltersPicker(viewModel, state) }
-
-        //  Section divider
-        item { HorizontalDivider() }
-
-        //  Summary of selected reservation params
-        item {
-            SelectedData(
-                viewModel,
-                state,
-                state.showTimePicker,
-                state.showAttendeesPicker,
-                state.showRecurringPicker,
-                state.showOtherFiltersPicker
-            )
+        if (state.showOtherFiltersPicker) {
+            item { AdditionalFiltersPicker(viewModel, state) }
         }
+
+
+        if (state.showTimePicker) {
+            //  Section divider
+            item { HorizontalDivider() }
+
+            //  Summary of selected reservation params
+            item {
+                SelectedData(
+                    viewModel,
+                    state,
+                    state.showTimePicker,
+                    state.showAttendeesPicker,
+                    state.showRecurringPicker,
+                    state.showOtherFiltersPicker
+                )
+            }
+        }
+
 
         //  Button to find available rooms
-        item {
-            FindAvailableRoomsButton(viewModel, state, isSystemInDarkTheme())
+        if (state.showTimePicker) {
+            item {
+                FindAvailableRoomsButton(viewModel, state, isSystemInDarkTheme())
+            }
         }
+
 
         //  Available rooms list
         item { AvailableRoomsList(state, viewModel) }
@@ -202,69 +216,68 @@ fun TimePickerInTopDown(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
 
-    if (state.showTimePicker) {
-        TopDownElement(
-            visible = isTimePickerVisible,
-            imageVector = Icons.Default.AccessTime,
-            title = state.selectedTime.getTimesText(state.selectedEndTime)
+
+    TopDownElement(
+        visible = isTimePickerVisible,
+        imageVector = Icons.Default.AccessTime,
+        title = state.selectedTime.getTimesText(state.selectedEndTime)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-            ) {
-                // Walidacja przy otwarciu
-                if (state.selectedTime == null && state.selectedEndTime == null) {
-                    if (!validateTimeDifference(startTime, endTime)) {
-                        errorMessage = "Różnica między godzinami musi wynosić co najmniej 90 minut."
-                    } else {
-                        errorMessage = null
-                        viewModel.changeReservationTimes(startTime, endTime)
-                        onSuccess()
-                    }
+            // Walidacja przy otwarciu
+            if (state.selectedTime == null && state.selectedEndTime == null) {
+                if (!validateTimeDifference(startTime, endTime)) {
+                    errorMessage = "Różnica między godzinami musi wynosić co najmniej 90 minut."
+                } else {
+                    errorMessage = null
+                    viewModel.changeReservationTimes(startTime, endTime)
+                    onSuccess()
                 }
+            }
 
-                // Wyświetlanie komunikatu błędu
-                errorMessage?.let { error ->
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = error,
-                        color = Color.Red,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-
-                TimePickerOption(
-                    label = "Godzina rozpoczęcia",
-                    label2 = "Godzina zakończenia",
-                    initialTime = startTime,
-                    initialEndTime = endTime,
-                    state = state,
-                    onStartTimeSelected = { newTime ->
-                        val newEndTime = getPreferredEndTime(newTime, state)
-                        if (validateTimeDifference(newTime, endTime)) {
-                            startTime = newTime
-                            endTime = newEndTime
-                            viewModel.changeTime(newTime)
-                            viewModel.changeEndTime(newEndTime)
-                            errorMessage = null
-                            onSuccess()
-                        } else {
-                            errorMessage = "Niepoprawna godzina rozpoczęcia!"
-                        }
-                    },
-                    onEndTimeSelected = { newTime ->
-                        if (validateTimeDifference(startTime, newTime)) {
-                            endTime = newTime
-                            viewModel.changeEndTime(newTime)
-                            errorMessage = null
-                        } else {
-                            errorMessage = "Niepoprawna godzina zakończenia!"
-                        }
-                    }
+            // Wyświetlanie komunikatu błędu
+            errorMessage?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = error,
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
+
+            TimePickerOption(
+                label = "Godzina rozpoczęcia",
+                label2 = "Godzina zakończenia",
+                initialTime = startTime,
+                initialEndTime = endTime,
+                state = state,
+                onStartTimeSelected = { newTime ->
+                    val newEndTime = getPreferredEndTime(newTime, state)
+                    if (validateTimeDifference(newTime, endTime)) {
+                        startTime = newTime
+                        endTime = newEndTime
+                        viewModel.changeTime(newTime)
+                        viewModel.changeEndTime(newEndTime)
+                        errorMessage = null
+                        onSuccess()
+                    } else {
+                        errorMessage = "Niepoprawna godzina rozpoczęcia!"
+                    }
+                },
+                onEndTimeSelected = { newTime ->
+                    if (validateTimeDifference(startTime, newTime)) {
+                        endTime = newTime
+                        viewModel.changeEndTime(newTime)
+                        errorMessage = null
+                    } else {
+                        errorMessage = "Niepoprawna godzina zakończenia!"
+                    }
+                }
+            )
         }
     }
 
@@ -340,29 +353,28 @@ fun CalendarEndDatePicker(
     val expandedBorderColor = if (isDarkTheme) Color(0xFF48C9B0) else Color(0xFF6D4C41)
 
 
-    if (state.showRecurringPicker && viewModel.canUserMakeRecurringReservation()) {
-        TopDownElement(
-            visible = isVisible,
-            imageVector = Icons.Default.EventRepeat,
-            title = state.endRecurrenceDate.getRecurrenceText(state.recurringFrequency),
-            titleStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onBackground
-            ),
-            content = {
-                RecurrencePickerContent(
-                    isVisible = isVisible.value,
-                    viewModel = viewModel,
-                    state = state,
-                    titleColor = titleColor,
-                    iconTint = iconTint,
-                    containerBrush = containerBrush,
-                    borderColor = borderColor,
-                    expandedContainerColor = expandedContainerColor,
-                    expandedBorderColor = expandedBorderColor
-                )
-            }
-        )
-    }
+
+    TopDownElement(
+        visible = isVisible,
+        imageVector = Icons.Default.EventRepeat,
+        title = state.endRecurrenceDate.getRecurrenceText(state.recurringFrequency),
+        titleStyle = MaterialTheme.typography.bodyLarge.copy(
+            color = MaterialTheme.colorScheme.onBackground
+        ),
+        content = {
+            RecurrencePickerContent(
+                isVisible = isVisible.value,
+                viewModel = viewModel,
+                state = state,
+                titleColor = titleColor,
+                iconTint = iconTint,
+                containerBrush = containerBrush,
+                borderColor = borderColor,
+                expandedContainerColor = expandedContainerColor,
+                expandedBorderColor = expandedBorderColor
+            )
+        }
+    )
 
 
 }

@@ -51,123 +51,122 @@ fun SelectedData(viewModel: ReservationViewModel, state: MainUiState, vararg sho
     val labelColor = if (isDarkTheme) Color(0xFFAEDFF7) else Color(0xFF3E2723)
     val valueColor = if (isDarkTheme) Color(0xFFB0C4DE) else Color(0xFF6D4C41)
 
-    if (state.showTimePicker) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(containerBrush)
-                .border(1.dp, borderColor, RoundedCornerShape(12.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Date Row (Start and End Date)
-            if (state.selectedDate != null) {
-                DataGroup(
-                    items = listOf(
-                        DataRowItem(
-                            icon = Icons.Default.EventAvailable,
-                            label = "Data rozpoczęcia",
-                            value = state.selectedDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
-                        ),
-                        DataRowItem(
-                            icon = Icons.Default.EventBusy,
-                            label = "Data zakończenia",
-                            value = (state.endRecurrenceDate ?: state.selectedDate)
-                                .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
-                        )
-                    ),
-                    iconTint = iconTint,
-                    labelColor = labelColor,
-                    valueColor = valueColor
-                )
-            }
 
-            // Time Rows (Start and End Time)
-            if ((state.selectedTime != null || state.selectedEndTime != null) && show[0]) {
-                DataGroup(
-                    items = listOf(
-                        DataRowItem(
-                            icon = Icons.Default.Schedule,
-                            label = "Czas rozpoczęcia",
-                            value = state.selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm"))
-                                ?: ""
-                        ),
-                        DataRowItem(
-                            icon = Icons.Default.Schedule,
-                            label = "Czas zakończenia",
-                            value = state.selectedEndTime?.format(DateTimeFormatter.ofPattern("HH:mm"))
-                                ?: ""
-                        )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(containerBrush)
+            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Date Row (Start and End Date)
+        if (state.selectedDate != null) {
+            DataGroup(
+                items = listOf(
+                    DataRowItem(
+                        icon = Icons.Default.EventAvailable,
+                        label = "Data rozpoczęcia",
+                        value = state.selectedDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
                     ),
-                    iconTint = iconTint,
-                    labelColor = labelColor,
-                    valueColor = valueColor
-                )
-            }
+                    DataRowItem(
+                        icon = Icons.Default.EventBusy,
+                        label = "Data zakończenia",
+                        value = (state.endRecurrenceDate ?: state.selectedDate)
+                            .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+                    )
+                ),
+                iconTint = iconTint,
+                labelColor = labelColor,
+                valueColor = valueColor
+            )
+        }
 
-            // Recurring and Frequency Rows
-            if (show[2] && state.isRecurring && viewModel.canUserMakeRecurringReservation()) {
-                DataGroup(
-                    items = listOf(
-                        DataRowItem(
-                            icon = Icons.Default.EventRepeat,
-                            label = "Cykliczność",
-                            value = if (state.isRecurring) "Tak" else "Nie"
-                        ),
-                        DataRowItem(
-                            icon = Icons.Default.EventRepeat,
-                            label = "Częstotliwość",
-                            value = translateRecurringFrequency(
-                                state.recurringFrequency ?: RecurrenceFrequency.WEEKLY
-                            )
-                        )
+        // Time Rows (Start and End Time)
+        if ((state.selectedTime != null || state.selectedEndTime != null) && show[0]) {
+            DataGroup(
+                items = listOf(
+                    DataRowItem(
+                        icon = Icons.Default.Schedule,
+                        label = "Czas rozpoczęcia",
+                        value = state.selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm"))
+                            ?: ""
                     ),
-                    iconTint = iconTint,
-                    labelColor = labelColor,
-                    valueColor = valueColor
-                )
-            }
+                    DataRowItem(
+                        icon = Icons.Default.Schedule,
+                        label = "Czas zakończenia",
+                        value = state.selectedEndTime?.format(DateTimeFormatter.ofPattern("HH:mm"))
+                            ?: ""
+                    )
+                ),
+                iconTint = iconTint,
+                labelColor = labelColor,
+                valueColor = valueColor
+            )
+        }
 
-            // Attendees Row
-            if (state.selectedAttendees > 1 && show[1]) {
+        // Recurring and Frequency Rows
+        if (show[2] && state.isRecurring && viewModel.canUserMakeRecurringReservation()) {
+            DataGroup(
+                items = listOf(
+                    DataRowItem(
+                        icon = Icons.Default.EventRepeat,
+                        label = "Cykliczność",
+                        value = if (state.isRecurring) "Tak" else "Nie"
+                    ),
+                    DataRowItem(
+                        icon = Icons.Default.EventRepeat,
+                        label = "Częstotliwość",
+                        value = translateRecurringFrequency(
+                            state.recurringFrequency ?: RecurrenceFrequency.WEEKLY
+                        )
+                    )
+                ),
+                iconTint = iconTint,
+                labelColor = labelColor,
+                valueColor = valueColor
+            )
+        }
+
+        // Attendees Row
+        if (state.selectedAttendees > 1 && show[1]) {
+            DataRow(
+                icon = Icons.Default.People,
+                label = "Liczba uczestników",
+                value = state.selectedAttendees.toString(),
+                iconTint = iconTint,
+                labelColor = labelColor,
+                valueColor = valueColor
+            )
+        }
+
+        // Floor and Equipment Rows
+        if (show[3]) {
+
+            if (state.selectedFloor != null) {
                 DataRow(
-                    icon = Icons.Default.People,
-                    label = "Liczba uczestników",
-                    value = state.selectedAttendees.toString(),
+                    icon = Icons.Default.Business,
+                    label = "Piętro",
+                    value = state.selectedFloor.getFloorName(),
                     iconTint = iconTint,
                     labelColor = labelColor,
                     valueColor = valueColor
                 )
             }
 
-            // Floor and Equipment Rows
-            if (show[3]) {
-
-                if (state.selectedFloor != null) {
-                    DataRow(
-                        icon = Icons.Default.Business,
-                        label = "Piętro",
-                        value = state.selectedFloor.getFloorName(),
-                        iconTint = iconTint,
-                        labelColor = labelColor,
-                        valueColor = valueColor
-                    )
-                }
 
 
-
-                if (state.selectedEquipment.isNotEmpty()) {
-                    DataRow(
-                        icon = Icons.Default.RoomPreferences,
-                        label = "Wyposażenie",
-                        value = state.selectedEquipment.joinToString(", ") { it.getNameInPolish() }
-                            .ifEmpty { "Nie wybrano" },
-                        iconTint = iconTint,
-                        labelColor = labelColor,
-                        valueColor = valueColor
-                    )
-                }
+            if (state.selectedEquipment.isNotEmpty()) {
+                DataRow(
+                    icon = Icons.Default.RoomPreferences,
+                    label = "Wyposażenie",
+                    value = state.selectedEquipment.joinToString(", ") { it.getNameInPolish() }
+                        .ifEmpty { "Nie wybrano" },
+                    iconTint = iconTint,
+                    labelColor = labelColor,
+                    valueColor = valueColor
+                )
             }
         }
     }

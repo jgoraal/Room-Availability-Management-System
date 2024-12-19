@@ -19,6 +19,7 @@ fun generateRandomRooms(roomIds: List<String>): List<Room> {
             Room(
                 id = roomId,
                 name = "Room ${index + 1}", // Assign room numbers
+                contactEmail = generateRandomEmail(), // Generate random email
                 floor = (1..3).random(), // Random floor (1-3)
                 capacity = (10..100).random(), // Random capacity (10-100 seats)
                 equipment = generateRandomEquipment(), // Random equipment
@@ -26,6 +27,17 @@ fun generateRandomRooms(roomIds: List<String>): List<Room> {
         )
     }
     return rooms
+}
+
+// Generate random email in the format x.y@put.poznan.pl
+fun generateRandomEmail(): String {
+    val firstNames = listOf("anna", "adam", "jakub", "marta", "kamil", "paulina", "michal", "piotr")
+    val lastNames =
+        listOf("kowalski", "nowak", "wrobel", "zajac", "lis", "duda", "mazur", "urbanski")
+
+    val firstName = firstNames.random().lowercase()
+    val lastName = lastNames.random().lowercase()
+    return "$firstName.$lastName@put.poznan.pl"
 }
 
 // Random equipment generation

@@ -2,6 +2,7 @@ package com.example.apptemplates.presentation.main.home.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
@@ -25,7 +27,6 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MeetingRoom
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
@@ -52,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -214,23 +216,6 @@ fun ReservationDetailsDialog(
                                 )
                             )
 
-                            /*// Ikona i nazwa kontaktu
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Osoba kontaktowa",
-                                    tint = colors.iconColor,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = reservation.contactName ?: "Brak danych",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        color = colors.primaryText
-                                    )
-                                )
-                            }*/
-
                             // Ikona i e-mail
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
@@ -244,11 +229,15 @@ fun ReservationDetailsDialog(
                                     text = reservation.roomId.getContactEmail(),
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         color = colors.primaryText
-                                    )
+                                    ),
+                                    maxLines = 1, // Ogranicza tekst do jednej linii
+                                    overflow = TextOverflow.Ellipsis, // Dodaje "..." na końcu, jeśli tekst jest za długi
+                                    modifier = Modifier.horizontalScroll(rememberScrollState()) // Włącza przewijanie w poziomie
                                 )
                             }
                         }
                     }
+
 
                     // 4. Status Rezerwacji
                     val statusColor = when (reservation.status) {

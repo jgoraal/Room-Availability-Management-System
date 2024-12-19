@@ -9,14 +9,26 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 
 
-fun generateRealisticLessonsForRooms(roomIds: List<String>): List<Lesson> {
+fun generateRealisticLessonsForRooms(roomIds: List<String>, userIds: List<String>): List<Lesson> {
     val lessons = mutableListOf<Lesson>()
     val lessonDuration = 1.5 // Each lesson lasts 1.5 hours
+    val lessonNames = listOf(
+        "Podstawy Teleinformatyki",
+        "Systemy Operacyjne",
+        "Programowanie w Pythonie",
+        "Algorytmy i Struktury Danych",
+        "Sieci Komputerowe",
+        "Bezpieczeństwo Informacji",
+        "Bazy Danych",
+        "Inżynieria Oprogramowania",
+        "Technika Cyfrowa",
+        "Grafika Komputerowa",
+    )
 
     for (roomId in roomIds) {
         for (day in DayOfWeek.entries) {
             // Random number of lessons for the day (between 2 and 7)
-            val numLessons = (2..7).random()
+            val numLessons = (2..5).random()
 
             // Define start hour ranges for the day, ensuring realistic scheduling
             var availableStartTimes = listOf(
@@ -44,6 +56,8 @@ fun generateRealisticLessonsForRooms(roomIds: List<String>): List<Lesson> {
                     Lesson(
                         day = lessonStart.dayOfWeek,
                         roomId = roomId,
+                        name = lessonNames.random(), // Random lesson name
+                        userId = userIds.random(), // Assign random user ID
                         lessonStart = lessonStart.toInstant(ZoneOffset.UTC).toEpochMilli(),
                         lessonEnd = lessonEnd.toInstant(ZoneOffset.UTC).toEpochMilli(),
                         lessonEndDate = lessonStart.plusWeeks(24).toInstant(ZoneOffset.UTC)

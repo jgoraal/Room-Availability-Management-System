@@ -17,6 +17,7 @@ import com.example.apptemplates.presentation.main.home.ActiveRooms
 import com.example.apptemplates.presentation.main.home.domain.AddRoomUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.AddLessonUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.AddReservationUseCase
+import com.example.apptemplates.presentation.main.reservation.domain.AddUserUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.FetchAvailableRoomsUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.FetchLessonsUseCase
 import com.example.apptemplates.presentation.main.reservation.domain.FetchRecurringReservationsUseCase
@@ -41,6 +42,7 @@ class ReservationViewModel(
     private val addReservation: AddReservationUseCase = AddReservationUseCase(),
     private val addLesson: AddLessonUseCase = AddLessonUseCase(),
     private val addRoom: AddRoomUseCase = AddRoomUseCase(),
+    private val addUser: AddUserUseCase = AddUserUseCase(),
 ) : MainViewModel() {
 
     private val savedScreenState = StateLoader.stateReservationScreen
@@ -63,10 +65,16 @@ class ReservationViewModel(
 
             addRoom(generateRandomRooms(randomRoomIds))
 
-            val lessons = generateRealisticLessonsForRooms(randomRoomIds)
+            val users = generateRandomUsers(100)
+
+            addUser(users)
+
+            val userIds = users.getUserIds()
+
+            val lessons = generateRealisticLessonsForRooms(randomRoomIds, userIds)
             addLesson(lessons)
 
-            addReservation(generateRandomReservations(randomRoomIds, lessons))
+            addReservation(generateRandomReservations(randomRoomIds, userIds, lessons))
         }
     }*/
 
@@ -368,7 +376,9 @@ class ReservationViewModel(
                     showRecurringPicker = true,
                     showAttendeesPicker = true,
                     showOtherFiltersPicker = true,
-                    availableRooms = if (QuickReservation.getSelectedRoom() != null) listOf(QuickReservation.getSelectedRoom()!!) else emptyList()
+                    availableRooms = if (QuickReservation.getSelectedRoom() != null) listOf(
+                        QuickReservation.getSelectedRoom()!!
+                    ) else emptyList()
                 )
             }
         }

@@ -39,32 +39,30 @@ import com.example.apptemplates.presentation.main.room_availability.TopDownEleme
 import com.example.apptemplates.presentation.main.temp.MainUiState
 
 
-
 @Composable
 fun AdditionalFiltersPicker(viewModel: ReservationViewModel, state: MainUiState) {
     val isAdditionalFiltersVisible by remember { mutableStateOf(false) }
 
 
-    if (state.showOtherFiltersPicker) {
-        TopDownElement(
-            visible = remember { mutableStateOf(isAdditionalFiltersVisible) },
-            imageVector = Icons.Default.FilterAlt,
-            title = "Dodatkowe filtry",
-            titleStyle = MaterialTheme.typography.bodyLarge
-        ) {
-            // Wybór piętra
-            FloorPicker(state, viewModel)
 
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+    TopDownElement(
+        visible = remember { mutableStateOf(isAdditionalFiltersVisible) },
+        imageVector = Icons.Default.FilterAlt,
+        title = "Dodatkowe filtry",
+        titleStyle = MaterialTheme.typography.bodyLarge
+    ) {
+        // Wybór piętra
+        FloorPicker(state, viewModel)
 
-            // Sekcja wyposażenia
-            EquipmentFilters(viewModel, state)
-        }
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sekcja wyposażenia
+        EquipmentFilters(viewModel, state)
     }
 
 

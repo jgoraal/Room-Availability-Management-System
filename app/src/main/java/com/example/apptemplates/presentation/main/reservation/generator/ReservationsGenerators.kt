@@ -46,11 +46,12 @@ fun generateTestReservation(): Reservation {
 
 fun generateRandomReservations(
     randomRoomIds: List<String>,
+    userIds: List<String>,
     lessons: List<Lesson>
 ): List<Reservation> {
     val reservations = mutableListOf<Reservation>()
 
-    for (i in 1..1_500) {
+    for (i in 1..1_000) {
         var reservationAdded = false
         var retryCount = 0
         val maxRetries = 5
@@ -85,7 +86,7 @@ fun generateRandomReservations(
                 reservations.add(
                     Reservation(
                         roomId = roomId,
-                        userId = "123",
+                        userId = userIds.shuffled().random(),
                         createdAt = LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
                         startTime = startDateTime.toInstant(ZoneOffset.UTC).toEpochMilli(),
                         endTime = endDateTime.toInstant(ZoneOffset.UTC).toEpochMilli(),

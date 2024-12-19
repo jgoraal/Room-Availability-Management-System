@@ -1,6 +1,5 @@
 package com.example.apptemplates.presentation.main.reservation.generator
 
-import android.util.Log
 import com.example.apptemplates.data.reservation.RecurrenceFrequency
 import com.example.apptemplates.data.reservation.RecurrencePattern
 import com.example.apptemplates.data.reservation.Reservation
@@ -10,6 +9,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 
+/*
 fun roomAvailableStandardReservation() {
 
     val randomRoomIds = generateRandomRoomIds(40)
@@ -185,6 +185,7 @@ fun roomAvailableRecurringReservation() {
 
 
 }
+*/
 
 fun generateTestRecurringReservation(): Reservation {
 
