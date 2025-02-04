@@ -65,14 +65,10 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
-    implementation("androidx.core:core-splashscreen:1.0.1") // Splash Screen
-
-
-    // Google Fonts
     implementation("androidx.compose.ui:ui-text-google-fonts:1.7.2")
 
-    // More default icons
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation("androidx.navigation:navigation-compose:2.8.1")

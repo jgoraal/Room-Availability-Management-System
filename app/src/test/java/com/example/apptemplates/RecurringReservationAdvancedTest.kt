@@ -1,10 +1,11 @@
 package com.example.apptemplates
 
-import com.example.apptemplates.data.reservation.RecurrenceFrequency
-import com.example.apptemplates.data.reservation.RecurrencePattern
-import com.example.apptemplates.data.reservation.Reservation
-import com.example.apptemplates.presentation.main.reservation.generator.isRecurringReservationOverlapping
-import com.example.apptemplates.presentation.main.reservation.generator.isRecurringReservationsOverlapping
+
+import com.example.apptemplates.domain.model.RecurrenceFrequency
+import com.example.apptemplates.domain.model.RecurrencePattern
+import com.example.apptemplates.domain.model.Reservation
+import com.example.apptemplates.presentation.screens.home.reservation.gen.isRecurringReservationOverlapping
+import com.example.apptemplates.presentation.screens.home.reservation.gen.isRecurringReservationsOverlapping
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -13,7 +14,7 @@ import java.time.ZoneOffset
 
 class RecurringReservationAdvancedTest {
 
-    // Helper function to create a reservation
+
     private fun createReservation(
         roomId: String,
         startTime: LocalDateTime,
@@ -32,7 +33,7 @@ class RecurringReservationAdvancedTest {
         )
     }
 
-    // Test: Overlap with bi-weekly recurrence patterns
+
     @Test
     fun `test biweekly recurring overlap`() {
         val testReservation = createReservation(
@@ -60,7 +61,7 @@ class RecurringReservationAdvancedTest {
         assertTrue(isRecurringReservationOverlapping(testReservation, recurringReservation))
     }
 
-    // Test: Monthly recurring reservation that overlaps weekly reservation
+
     @Test
     fun `test monthly recurring overlaps with weekly recurring`() {
         val testReservation = createReservation(
@@ -88,7 +89,7 @@ class RecurringReservationAdvancedTest {
         assertTrue(isRecurringReservationOverlapping(testReservation, weeklyReservation))
     }
 
-    // Test: Reservation that spans multiple months but does not overlap weekly reservation
+
     @Test
     fun `test monthly reservation that does not overlap weekly recurring`() {
         val testReservation = createReservation(
@@ -118,7 +119,7 @@ class RecurringReservationAdvancedTest {
         assertFalse(isRecurringReservationsOverlapping(testReservation, weeklyReservation) && bool)
     }
 
-    // Test: Edge case where two reservations are on the same day but different weeks, no overlap
+
     @Test
     fun `test same day different weeks no overlap`() {
         val testReservation = createReservation(
@@ -153,7 +154,7 @@ class RecurringReservationAdvancedTest {
         )
     }
 
-    // Test: Recurring reservation that overlaps another after several weeks of recurrence
+
     @Test
     fun `test overlap after several weeks of recurrence`() {
         val testReservation = createReservation(
@@ -183,7 +184,7 @@ class RecurringReservationAdvancedTest {
         assertFalse(isRecurringReservationOverlapping(futureRecurringReservation, testReservation))
     }
 
-    // Test: No overlap when two reservations are on the same day but one ends right before the other starts
+
     @Test
     fun `test no overlap when one ends right before another starts`() {
         val testReservation = createReservation(

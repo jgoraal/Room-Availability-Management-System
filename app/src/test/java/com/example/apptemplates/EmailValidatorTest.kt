@@ -1,7 +1,7 @@
 package com.example.apptemplates
 
-import com.example.apptemplates.form.validation.EmailValidator
-import com.example.apptemplates.result.Result
+import com.example.apptemplates.data.firebase.database.result.Result
+import com.example.apptemplates.utils.validation.EmailValidator
 import junit.framework.Assert.assertTrue
 import org.junit.Test
 

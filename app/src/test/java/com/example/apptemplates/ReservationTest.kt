@@ -1,9 +1,9 @@
 package com.example.apptemplates
 
-import com.example.apptemplates.data.reservation.RecurrenceFrequency
-import com.example.apptemplates.data.reservation.RecurrencePattern
-import com.example.apptemplates.data.reservation.Reservation
-import com.example.apptemplates.presentation.main.reservation.generator.isRecurringReservationOverlapping
+import com.example.apptemplates.domain.model.RecurrenceFrequency
+import com.example.apptemplates.domain.model.RecurrencePattern
+import com.example.apptemplates.domain.model.Reservation
+import com.example.apptemplates.presentation.screens.home.reservation.gen.isRecurringReservationOverlapping
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,7 +12,7 @@ import java.time.ZoneOffset
 
 class ReservationTest {
 
-    // Helper function to create test reservations
+
     private fun createReservation(
         startTime: LocalDateTime,
         endTime: LocalDateTime,
@@ -107,7 +107,7 @@ class ReservationTest {
     @Test
     fun `test no overlap with different day recurring reservation`() {
         val testReservation = createReservation(
-            startTime = LocalDateTime.of(2024, 10, 11, 18, 0),  // Friday
+            startTime = LocalDateTime.of(2024, 10, 11, 18, 0),
             endTime = LocalDateTime.of(2024, 10, 11, 20, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.WEEKLY,
@@ -115,7 +115,7 @@ class ReservationTest {
         )
 
         val recurringReservation = createReservation(
-            startTime = LocalDateTime.of(2024, 10, 10, 18, 0),  // Thursday
+            startTime = LocalDateTime.of(2024, 10, 10, 18, 0),
             endTime = LocalDateTime.of(2024, 10, 10, 20, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.WEEKLY,
@@ -129,7 +129,7 @@ class ReservationTest {
     @Test
     fun `test overlap biweekly recurring reservation`() {
         val testReservation = createReservation(
-            startTime = LocalDateTime.of(2024, 10, 24, 18, 0),  // Two weeks later
+            startTime = LocalDateTime.of(2024, 10, 24, 18, 0),
             endTime = LocalDateTime.of(2024, 10, 24, 20, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.BIWEEKLY,
@@ -137,7 +137,7 @@ class ReservationTest {
         )
 
         val recurringReservation = createReservation(
-            startTime = LocalDateTime.of(2024, 10, 10, 18, 0),  // First event
+            startTime = LocalDateTime.of(2024, 10, 10, 18, 0),
             endTime = LocalDateTime.of(2024, 10, 10, 20, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.BIWEEKLY,
@@ -151,7 +151,7 @@ class ReservationTest {
     @Test
     fun `test no overlap after recurrence ends`() {
         val testReservation = createReservation(
-            startTime = LocalDateTime.of(2025, 1, 1, 18, 0),  // After recurrence ends
+            startTime = LocalDateTime.of(2025, 1, 1, 18, 0),
             endTime = LocalDateTime.of(2025, 1, 1, 20, 0),
             isRecurring = false,
             frequency = RecurrenceFrequency.WEEKLY,
@@ -182,7 +182,7 @@ class ReservationTest {
         )
 
         val recurringReservation = createReservation(
-            startTime = LocalDateTime.of(2024, 10, 10, 17, 0),  // Starts earlier but overlaps
+            startTime = LocalDateTime.of(2024, 10, 10, 17, 0),
             endTime = LocalDateTime.of(2024, 10, 10, 19, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.WEEKLY,
@@ -210,7 +210,7 @@ class ReservationTest {
                 10,
                 19,
                 0
-            ),  // Ends later, starts during test reservation
+            ),
             endTime = LocalDateTime.of(2024, 10, 10, 21, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.WEEKLY,
@@ -224,7 +224,7 @@ class ReservationTest {
     @Test
     fun `test monthly recurring reservation overlap`() {
         val testReservation = createReservation(
-            startTime = LocalDateTime.of(2024, 11, 10, 18, 0),  // A month later
+            startTime = LocalDateTime.of(2024, 11, 10, 18, 0),
             endTime = LocalDateTime.of(2024, 11, 10, 20, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.MONTHLY,
@@ -246,15 +246,15 @@ class ReservationTest {
     @Test
     fun `test reservation spanning multiple times`() {
         val testReservation = createReservation(
-            startTime = LocalDateTime.of(2024, 10, 10, 16, 0),  // Starts earlier
-            endTime = LocalDateTime.of(2024, 10, 10, 22, 0),   // Ends later
+            startTime = LocalDateTime.of(2024, 10, 10, 16, 0),
+            endTime = LocalDateTime.of(2024, 10, 10, 22, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.WEEKLY,
             endRecurrence = LocalDateTime.of(2025, 1, 1, 0, 0)
         )
 
         val recurringReservation = createReservation(
-            startTime = LocalDateTime.of(2024, 10, 10, 18, 0),  // Fully within test reservation
+            startTime = LocalDateTime.of(2024, 10, 10, 18, 0),
             endTime = LocalDateTime.of(2024, 10, 10, 20, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.WEEKLY,
@@ -269,7 +269,7 @@ class ReservationTest {
     fun `test edge case same start and end time`() {
         val testReservation = createReservation(
             startTime = LocalDateTime.of(2024, 10, 10, 18, 0),
-            endTime = LocalDateTime.of(2024, 10, 10, 18, 0),   // Same start and end
+            endTime = LocalDateTime.of(2024, 10, 10, 18, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.WEEKLY,
             endRecurrence = LocalDateTime.of(2025, 1, 1, 0, 0)
@@ -277,7 +277,7 @@ class ReservationTest {
 
         val recurringReservation = createReservation(
             startTime = LocalDateTime.of(2024, 10, 10, 18, 0),
-            endTime = LocalDateTime.of(2024, 10, 10, 18, 0),   // Same start and end
+            endTime = LocalDateTime.of(2024, 10, 10, 18, 0),
             isRecurring = true,
             frequency = RecurrenceFrequency.WEEKLY,
             endRecurrence = LocalDateTime.of(2025, 1, 1, 0, 0)

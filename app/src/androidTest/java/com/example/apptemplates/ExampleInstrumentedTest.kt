@@ -2,12 +2,12 @@ package com.example.apptemplates
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.example.apptemplates.firebase.auth.operation.AuthManager
-import com.example.apptemplates.firebase.auth.operation.SignInOperation
-import com.example.apptemplates.firebase.auth.operation.SignUpOperation
-import com.example.apptemplates.form.FormState
-import com.example.apptemplates.form.validation.EmailValidator
-import com.example.apptemplates.result.Result
+import com.example.apptemplates.data.firebase.auth.operation.AuthManager
+import com.example.apptemplates.data.firebase.auth.operation.SignInOperation
+import com.example.apptemplates.data.firebase.auth.operation.SignUpOperation
+import com.example.apptemplates.data.firebase.database.result.Result
+import com.example.apptemplates.presentation.state.FormState
+import com.example.apptemplates.utils.validation.EmailValidator
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -37,10 +37,10 @@ class EmailValidatorInstrumentedTest {
     fun validEmailPassesValidation() {
         val emailValidator = EmailValidator()
 
-        // Provide a valid email address
+
         val result = emailValidator.validate("test@example.com")
 
-        // Assert that validation passed
+
         assertTrue(result is Result.Error)
     }
 
@@ -48,10 +48,10 @@ class EmailValidatorInstrumentedTest {
     fun invalidEmailFailsValidation() {
         val emailValidator = EmailValidator()
 
-        // Provide an invalid email address
+
         val result = emailValidator.validate("invalid-email")
 
-        // Assert that validation failed
+
         assertTrue(result is Result.Error)
     }
 
@@ -59,10 +59,10 @@ class EmailValidatorInstrumentedTest {
     fun emptyEmailFailsValidation() {
         val emailValidator = EmailValidator()
 
-        // Provide an empty email address
+
         val result = emailValidator.validate("")
 
-        // Assert that validation failed
+
         assertTrue(result is Result.Error)
     }
 }
@@ -76,17 +76,17 @@ class SignInInstrumentedTest {
         val authManager = AuthManager()
         val signInOperation = SignInOperation()
 
-        // Setup a valid FormState
+
         val state = FormState(
             email = "jakubgorskki@gmail.com",
             password = "@Test1234"
         )
 
-        // Perform the sign-in operation
+
         runBlocking {
             val result = signInOperation.performAuthAction(state)
 
-            // Assert that the result is success
+
             assertTrue(result is Result.Success)
         }
     }
@@ -96,17 +96,17 @@ class SignInInstrumentedTest {
         val authManager = AuthManager()
         val signInOperation = SignInOperation()
 
-        // Setup an invalid FormState
+
         val state = FormState(
             email = "invalid@example.com",
             password = "WrongPassword!"
         )
 
-        // Perform the sign-in operation
+
         runBlocking {
             val result = signInOperation.performAuthAction(state)
 
-            // Assert that the result is an error
+
             assertTrue(result is Result.Error)
         }
     }
@@ -121,7 +121,7 @@ class SignUpInstrumentedTest {
         val signUpOperation = SignUpOperation()
         val emailValidator = EmailValidator()
 
-        // Setup a valid FormState for sign-up
+
         val state = FormState(
             username = "validuser",
             email = "validuser@example.com",
@@ -129,7 +129,7 @@ class SignUpInstrumentedTest {
             confirmPassword = "ValidPassword123!"
         )
 
-        // Perform the sign-up operation
+
         runBlocking {
 
             val result1 = emailValidator.validate(state.email)
@@ -139,10 +139,6 @@ class SignUpInstrumentedTest {
                 val result = signUpOperation.performAuthAction(state)
                 assertTrue(result is Result.Error)
             }
-
-
-            // Assert that the result is success
-
         }
     }
 
@@ -150,7 +146,7 @@ class SignUpInstrumentedTest {
     fun signUpWithMismatchingPasswords() {
         val signUpOperation = SignUpOperation()
 
-        // Setup a FormState with mismatching passwords
+
         val state = FormState(
             username = "validuser",
             email = "validuser@example.com",
@@ -158,12 +154,12 @@ class SignUpInstrumentedTest {
             confirmPassword = "MismatchingPassword!"
         )
 
-        // Perform the sign-up operation
+
         runBlocking {
             val result = signUpOperation.performAuthAction(state)
 
 
-            // Assert that the result is an error
+
             assertTrue(result is Result.Error)
         }
     }
